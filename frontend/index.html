@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Outfit Studio – Thay Đổi Trang Phục Bằng AI</title>
+  <meta name="description" content="Ứng dụng AI thay đổi trang phục thông minh: Cảnh Sát, Bác Sĩ, Giáo Viên, Ca Sĩ. Powered by OpenAI & Google Gemini." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- ── Animated background ─────────────────────────────────────────── -->
+  <div class="bg-orbs" aria-hidden="true">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- ── Header ──────────────────────────────────────────────────────── -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">✦</span>
+        <span class="logo-text">AI Outfit Studio</span>
+        <span class="logo-badge">BETA</span>
+      </div>
+      <div class="header-status" id="headerStatus">
+        <span class="status-dot" id="statusDot"></span>
+        <span class="status-text" id="statusText">Đang kết nối...</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ── Main ────────────────────────────────────────────────────────── -->
+  <main class="main">
+    <div class="container">
+
+      <!-- ── Hero ──────────────────────────────────────────────────── -->
+      <section class="hero" aria-labelledby="heroTitle">
+        <h1 id="heroTitle" class="hero-title">
+          Biến Hóa <span class="gradient-text">Trang Phục</span> Bằng AI
+        </h1>
+        <p class="hero-subtitle">
+          Tải ảnh của bạn lên, chọn nghề nghiệp — AI sẽ thay đổi trang phục trong vài giây.
+        </p>
+      </section>
+
+      <!-- ── Content Grid ───────────────────────────────────────────── -->
+      <div class="content-grid">
+
+        <!-- ── Left Panel: Upload ─────────────────────────────────── -->
+        <section class="panel upload-panel" aria-label="Tải ảnh lên">
+          <div class="panel-header">
+            <div class="panel-icon">📷</div>
+            <div>
+              <h2 class="panel-title">Ảnh Gốc</h2>
+              <p class="panel-subtitle">Tải ảnh chân dung hoặc toàn thân</p>
+            </div>
+          </div>
+
+          <div
+            class="drop-zone"
+            id="dropZone"
+            role="button"
+            tabindex="0"
+            aria-label="Kéo thả ảnh vào đây hoặc nhấn để chọn ảnh"
+            aria-describedby="dropZoneHelp"
+          >
+            <div class="drop-zone-inner" id="dropZoneInner">
+              <div class="drop-icon">🖼️</div>
+              <p class="drop-title">Kéo & Thả ảnh vào đây</p>
+              <p class="drop-subtitle" id="dropZoneHelp">hoặc nhấn để chọn file</p>
+              <p class="drop-formats">JPG · PNG · WEBP · tối đa 10MB</p>
+            </div>
+            <img id="previewImg" class="preview-img hidden" alt="Ảnh đã tải lên" />
+            <div class="preview-overlay hidden" id="previewOverlay">
+              <button class="change-btn" id="changeImgBtn" aria-label="Thay đổi ảnh">
+                <span>🔄</span> Đổi ảnh
+              </button>
+            </div>
+          </div>
+
+          <input type="file" id="fileInput" accept="image/*" class="hidden" aria-hidden="true" />
+        </section>
+
+        <!-- ── Middle Panel: Controls ─────────────────────────────── -->
+        <section class="panel controls-panel" aria-label="Tùy chọn biến đổi">
+          <div class="panel-header">
+            <div class="panel-icon">⚡</div>
+            <div>
+              <h2 class="panel-title">Chọn Nghề Nghiệp</h2>
+              <p class="panel-subtitle">AI sẽ thay toàn bộ trang phục</p>
+            </div>
+          </div>
+
+          <!-- Profession Buttons -->
+          <div class="profession-grid" id="professionGrid" role="radiogroup" aria-label="Loại nghề nghiệp">
+            <button
+              class="profession-btn"
+              id="btn-police"
+              data-profession="police"
+              role="radio"
+              aria-checked="false"
+              aria-label="Cảnh sát"
+            >
+              <span class="prof-icon">🚔</span>
+              <span class="prof-label">Cảnh Sát</span>
+              <span class="prof-label-en">Police</span>
+              <div class="prof-glow police-glow"></div>
+            </button>
+
+            <button
+              class="profession-btn"
+              id="btn-doctor"
+              data-profession="doctor"
+              role="radio"
+              aria-checked="false"
+              aria-label="Bác sĩ"
+            >
+              <span class="prof-icon">🏥</span>
+              <span class="prof-label">Bác Sĩ</span>
+              <span class="prof-label-en">Doctor</span>
+              <div class="prof-glow doctor-glow"></div>
+            </button>
+
+            <button
+              class="profession-btn"
+              id="btn-teacher"
+              data-profession="teacher"
+              role="radio"
+              aria-checked="false"
+              aria-label="Giáo viên"
+            >
+              <span class="prof-icon">📚</span>
+              <span class="prof-label">Giáo Viên</span>
+              <span class="prof-label-en">Teacher</span>
+              <div class="prof-glow teacher-glow"></div>
+            </button>
+
+            <button
+              class="profession-btn"
+              id="btn-singer"
+              data-profession="singer"
+              role="radio"
+              aria-checked="false"
+              aria-label="Ca sĩ"
+            >
+              <span class="prof-icon">🎤</span>
+              <span class="prof-label">Ca Sĩ</span>
+              <span class="prof-label-en">Singer</span>
+              <div class="prof-glow singer-glow"></div>
+            </button>
+          </div>
+
+          <!-- AI Provider -->
+          <div class="provider-section">
+            <h3 class="section-label">🤖 Chọn AI</h3>
+            <div class="provider-toggle" role="group" aria-label="AI Provider">
+              <button
+                class="provider-btn active"
+                id="providerOpenai"
+                data-provider="openai"
+                aria-pressed="true"
+              >
+                <img src="https://upload.wikimedia.org/wikipedia/commons/4/4d/OpenAI_Logo.svg" alt="" class="provider-logo" aria-hidden="true" />
+                <span>OpenAI</span>
+              </button>
+              <button
+                class="provider-btn"
+                id="providerGemini"
+                data-provider="gemini"
+                aria-pressed="false"
+              >
+                <span class="gemini-icon" aria-hidden="true">✦</span>
+                <span>Gemini</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Transform Button -->
+          <button class="transform-btn" id="transformBtn" disabled aria-label="Biến đổi trang phục">
+            <span class="transform-btn-content" id="transformBtnContent">
+              <span class="btn-icon">✨</span>
+              <span>Biến Đổi Ngay</span>
+            </span>
+            <div class="btn-shimmer"></div>
+          </button>
+
+          <!-- Progress -->
+          <div class="progress-section hidden" id="progressSection" role="status" aria-live="polite">
+            <div class="progress-bar-wrap">
+              <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <p class="progress-text" id="progressText">Đang xử lý...</p>
+          </div>
+
+          <!-- Error -->
+          <div class="error-box hidden" id="errorBox" role="alert" aria-live="assertive">
+            <span class="error-icon">⚠️</span>
+            <p class="error-message" id="errorMessage">Đã có lỗi xảy ra.</p>
+          </div>
+        </section>
+
+        <!-- ── Right Panel: Result ────────────────────────────────── -->
+        <section class="panel result-panel" aria-label="Kết quả biến đổi" aria-live="polite">
+          <div class="panel-header">
+            <div class="panel-icon">🌟</div>
+            <div>
+              <h2 class="panel-title">Kết Quả</h2>
+              <p class="panel-subtitle" id="resultSubtitle">Chưa có kết quả</p>
+            </div>
+          </div>
+
+          <!-- Placeholder -->
+          <div class="result-placeholder" id="resultPlaceholder" aria-hidden="true">
+            <div class="placeholder-anim">
+              <div class="placeholder-ring"></div>
+              <div class="placeholder-ring r2"></div>
+              <div class="placeholder-ring r3"></div>
+            </div>
+            <p class="placeholder-text">Kết quả sẽ hiển thị ở đây</p>
+            <p class="placeholder-hint">Tải ảnh lên và chọn nghề nghiệp để bắt đầu</p>
+          </div>
+
+          <!-- Result Image -->
+          <div class="result-img-wrap hidden" id="resultImgWrap">
+            <img id="resultImg" class="result-img" alt="Ảnh sau khi biến đổi trang phục" />
+            <div class="result-badge" id="resultBadge"></div>
+          </div>
+
+          <!-- Actions -->
+          <div class="result-actions hidden" id="resultActions">
+            <button class="action-btn download-btn" id="downloadBtn" aria-label="Tải ảnh kết quả về máy">
+              <span>⬇️</span> Tải Về
+            </button>
+            <button class="action-btn share-btn" id="shareBtn" aria-label="Sao chép ảnh">
+              <span>📋</span> Sao Chép
+            </button>
+          </div>
+        </section>
+
+      </div><!-- /.content-grid -->
+
+      <!-- ── Compare Section ────────────────────────────────────────── -->
+      <section class="compare-section hidden" id="compareSection" aria-label="So sánh trước và sau">
+        <h2 class="section-title">So Sánh Trước & Sau</h2>
+        <div class="compare-grid">
+          <div class="compare-card">
+            <div class="compare-label before-label">TRƯỚC</div>
+            <img id="compareOriginal" class="compare-img" alt="Ảnh gốc" />
+          </div>
+          <div class="compare-arrow" aria-hidden="true">→</div>
+          <div class="compare-card">
+            <div class="compare-label after-label" id="afterLabel">SAU</div>
+            <img id="compareResult" class="compare-img" alt="Ảnh kết quả" />
+          </div>
+        </div>
+      </section>
+
+    </div><!-- /.container -->
+  </main>
+
+  <!-- ── Footer ──────────────────────────────────────────────────────── -->
+  <footer class="footer">
+    <p>AI Outfit Studio · Powered by <strong>OpenAI GPT-Image</strong> & <strong>Google Gemini</strong></p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
