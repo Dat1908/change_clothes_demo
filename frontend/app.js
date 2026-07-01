@@ -2,7 +2,7 @@
    AI OUTFIT STUDIO — Frontend App Logic
    ══════════════════════════════════════════════════════════════════════ */
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = "";
 
 // ── State ─────────────────────────────────────────────────────────────────
 const state = {
@@ -63,7 +63,10 @@ const PROFESSIONS = {
 // ── Health Check ──────────────────────────────────────────────────────────
 async function checkHealth() {
   try {
-    const res = await fetch(`${API_BASE}/health`, { signal: AbortSignal.timeout(5000) });
+    const res = await fetch(`${API_BASE}/health`, { 
+      headers: { "ngrok-skip-browser-warning": "true" },
+      signal: AbortSignal.timeout(5000) 
+    });
     const data = await res.json();
     if (data.status === "ok" || data.status === "degraded") {
       statusDot.className  = "status-dot online";
@@ -294,6 +297,7 @@ transformBtn.addEventListener("click", async () => {
       // 1. Submit task
       const res = await fetch(`${API_BASE}/api/tasks/change-clothes`, {
         method: "POST",
+        headers: { "ngrok-skip-browser-warning": "true" },
         body: formData,
       });
 
@@ -310,7 +314,9 @@ transformBtn.addEventListener("click", async () => {
       while (true) {
         await new Promise(resolve => setTimeout(resolve, 2000)); // Poll every 2s
         
-        const pollRes = await fetch(`${API_BASE}/api/tasks/${taskId}`);
+        const pollRes = await fetch(`${API_BASE}/api/tasks/${taskId}`, {
+          headers: { "ngrok-skip-browser-warning": "true" }
+        });
         const pollData = await pollRes.json();
         
         if (!pollRes.ok) {

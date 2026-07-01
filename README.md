@@ -45,7 +45,10 @@ Sau khi server chạy:
 - **Frontend UI**: http://localhost:8000/app
 - **API Docs**: http://localhost:8000/docs
 - **Health Check**: http://localhost:8000/health
-
+- **Public Ngrok**: 
+```bash
+ngrok http 8000 --pooling-enabled
+```
 ## API Endpoints
 
 | Method | Endpoint | Mô tả |
