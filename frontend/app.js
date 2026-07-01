@@ -301,7 +301,16 @@ transformBtn.addEventListener("click", async () => {
         body: formData,
       });
 
-      const data = await res.json();
+      const textData = await res.text();
+      let data;
+      try {
+        data = JSON.parse(textData);
+      } catch (e) {
+        if (!res.ok) {
+          throw new Error(`Ngrok/Server Error (${res.status}): Máy chủ bận hoặc lỗi kết nối ngrok.`);
+        }
+        throw new Error("Lỗi mạng: Không thể đọc dữ liệu JSON từ server.");
+      }
 
       if (!res.ok) {
         throw new Error(data.detail || `Lỗi server: ${res.status}`);
@@ -312,24 +321,35 @@ transformBtn.addEventListener("click", async () => {
       // 2. Poll for status
       let taskResult = null;
       while (true) {
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Poll every 2s
+        await new Promise(resolve => setTimeout(resolve, 5000)); // Poll every 5s to avoid ngrok rate limits
         
         const pollRes = await fetch(`${API_BASE}/api/tasks/${taskId}`, {
           headers: { "ngrok-skip-browser-warning": "true" }
         });
-        const pollData = await pollRes.json();
+        
+        const textData = await pollRes.text();
+        let pollData;
+        try {
+          pollData = JSON.parse(textData);
+        } catch (e) {
+          // If ngrok returns an HTML error page (like 429 Too Many Requests), throw a clear error
+          if (!pollRes.ok) {
+            throw new Error(`Ngrok/Server Error (${pollRes.status}): Máy chủ bận hoặc lỗi kết nối ngrok.`);
+          }
+          throw new Error("Lỗi mạng: Không thể đọc dữ liệu JSON từ server.");
+        }
         
         if (!pollRes.ok) {
           throw new Error(pollData.detail || `Lỗi server: ${pollRes.status}`);
         }
-        
+
         if (pollData.status === "completed") {
           taskResult = pollData;
           break;
         } else if (pollData.status === "failed") {
           throw new Error(pollData.error || "Quá trình xử lý thất bại.");
         }
-        // if processing, continue loop
+        // else processing -> continue loop
       }
       return taskResult;
     }
