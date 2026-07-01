@@ -50,15 +50,19 @@ if frontend_dir.exists():
 if __name__ == "__main__":
     import uvicorn
 
+    PORT = 8000
+
     logger.info("Starting Clothing Change Demo API server...")
     config_errors = validate_config()
     if config_errors:
         logger.warning(f"Config warnings: {config_errors}")
 
+    logger.info(f"🌐 Mở Web-app tại: http://127.0.0.1:{PORT}/app")
+
     uvicorn.run(
         "main:app",
-        host="0.0.0.0",
-        port=8000,
+        host="127.0.0.1",
+        port=PORT,
         reload=True,
         log_level="info",
     )

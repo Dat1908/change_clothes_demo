@@ -3,33 +3,9 @@ import io
 import logging
 from openai import OpenAI
 from config import OPENAI_API_KEY, GPT_MODEL_NAME
+from services.prompts import PROMPTS, NEGATIVE_PROMPT
 
 logger = logging.getLogger(__name__)
-
-
-PROMPTS = {
-    "police": (
-        "Keep the exact same number of people and identities. Change only clothing to a plain green Vietnamese criminal police uniform for all people in the image. "
-        "Keep the same faces, bodies, hairstyles, and poses. Use a professional police-related background."
-    ),
-    "doctor": (
-        "Keep the exact same number of people and identities. Change only clothing to a white doctor coat with a professional medical look for all people in the image. "
-        "Keep the same faces, bodies, hairstyles, and poses. Use a clean hospital or clinic background."
-    ),
-    "teacher": (
-        "Keep the exact same number of people and identities. Change only clothing to a neat professional teacher outfit for all people in the image. "
-        "Keep the same faces, bodies, hairstyles, and poses. Use a classroom or school background."
-    ),
-    "singer": (
-        "Keep the exact same number of people and identities. Change only clothing to an elegant professional singer stage outfit for all people in the image. "
-        "Keep the same faces, bodies, hairstyles, and poses. Use a concert or stage background."
-    ),
-}
-
-NEGATIVE_PROMPT = (
-    "different identity, changed face, "
-    "deformed face, bad eyes, bad anatomy, blurry, low quality, text, watermark, logo"
-)
 
 
 def change_clothes_openai(image_bytes: bytes, profession: str) -> str:

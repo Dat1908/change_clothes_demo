@@ -30,7 +30,7 @@ async def get_professions():
                 "id": "police",
                 "label": "Cảnh Sát",
                 "label_en": "Police",
-                "icon": "🚔",
+                "icon": "👮🚔",
                 "color": "#10b981",
                 "description": "Đồng phục cảnh sát nhân dân Việt Nam",
             },
@@ -38,7 +38,7 @@ async def get_professions():
                 "id": "doctor",
                 "label": "Bác Sĩ",
                 "label_en": "Doctor",
-                "icon": "🏥",
+                "icon": "🧑‍⚕️🏥",
                 "color": "#3b82f6",
                 "description": "Áo blouse trắng bác sĩ chuyên nghiệp",
             },
@@ -46,7 +46,7 @@ async def get_professions():
                 "id": "teacher",
                 "label": "Giáo Viên",
                 "label_en": "Teacher",
-                "icon": "📚",
+                "icon": "🧑‍🏫📚",
                 "color": "#f59e0b",
                 "description": "Trang phục giáo viên lịch sự",
             },
@@ -58,6 +58,38 @@ async def get_professions():
                 "color": "#ec4899",
                 "description": "Trang phục biểu diễn ca sĩ",
             },
+            {
+                "id": "firefighter",
+                "label": "Lính Cứu Hỏa",
+                "label_en": "Firefighter",
+                "icon": "🚒",
+                "color": "#ef4444",
+                "description": "Đồng phục lính cứu hỏa chuyên nghiệp",
+            },
+            {
+                "id": "pilot",
+                "label": "Phi Công",
+                "label_en": "Pilot",
+                "icon": "✈️",
+                "color": "#06b6d4",
+                "description": "Đồng phục phi công hàng không",
+            },
+            {
+                "id": "chef",
+                "label": "Đầu Bếp",
+                "label_en": "Chef",
+                "icon": "👨‍🍳",
+                "color": "#a855f7",
+                "description": "Đồng phục đầu bếp chuyên nghiệp",
+            },
+            {
+                "id": "engineer",
+                "label": "Kỹ Sư",
+                "label_en": "Engineer",
+                "icon": "👷",
+                "color": "#eab308",
+                "description": "Trang phục kỹ sư công trình",
+            },
         ]
     }
 
@@ -66,13 +98,13 @@ async def get_professions():
 async def create_change_clothes_task(
     background_tasks: BackgroundTasks,
     image: UploadFile = File(..., description="Input person image (JPG/PNG)"),
-    profession: str = Form(..., description="Profession: police | doctor | teacher | singer"),
+    profession: str = Form(..., description="Profession: police | doctor | teacher | singer | firefighter | pilot | chef | engineer"),
     ai_provider: str = Form(default="openai", description="AI provider: openai | gemini"),
 ):
     """
     Submit a task to transform clothing. Returns a task_id immediately.
     """
-    allowed_professions = {"police", "doctor", "teacher", "singer"}
+    allowed_professions = {"police", "doctor", "teacher", "singer", "firefighter", "pilot", "chef", "engineer"}
     allowed_providers = {"openai", "gemini"}
 
     profession = profession.lower().strip()

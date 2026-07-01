@@ -3,11 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI Outfit Studio – Thay Đổi Trang Phục Bằng AI</title>
-  <meta name="description" content="Ứng dụng AI thay đổi trang phục thông minh: Cảnh Sát, Bác Sĩ, Giáo Viên, Ca Sĩ. Powered by OpenAI & Google Gemini." />
+  <title>AI Outfit Studio</title>
+  <meta name="description"
+    content="Ứng dụng AI thay đổi trang phục thông minh: Cảnh Sát, Bác Sĩ, Giáo Viên, Ca Sĩ. Powered by OpenAI & Google Gemini." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -39,84 +42,114 @@
 
       <!-- ── Hero ──────────────────────────────────────────────────── -->
       <section class="hero" aria-labelledby="heroTitle">
-        <h1 id="heroTitle" class="hero-title">
-          Chỉnh sửa <span class="gradient-text">Trang Phục</span> Bằng AI
+        <h1 id="heroTitle" class="hero-title hero-title-blue">
+          Chỉnh sửa Trang Phục Bằng AI
         </h1>
-        <p class="hero-subtitle">
-          Tải ảnh của bạn lên, chọn nghề nghiệp — AI sẽ thay đổi trang phục trong vài giây.
-        </p>
       </section>
 
-      <!-- ── Content Grid ───────────────────────────────────────────── -->
-      <div class="content-grid">
+      <!-- ── Row 1: Input Source + Profession ─────────────────────────── -->
+      <div class="row-grid">
 
-        <!-- ── Left Panel: Upload ─────────────────────────────────── -->
-        <section class="panel upload-panel" aria-label="Tải ảnh lên">
+        <!-- ── Left: Input Source ─────────────────────────────────── -->
+        <section class="panel source-panel" aria-label="Nguồn ảnh đầu vào">
           <div class="panel-header">
-            <div class="panel-icon">📷</div>
+            <div class="panel-icon">📥</div>
             <div>
-              <h2 class="panel-title">Ảnh Gốc</h2>
-              <p class="panel-subtitle">Tải ảnh chân dung hoặc toàn thân</p>
+              <h2 class="panel-title">Đầu Vào</h2>
+              <p class="panel-subtitle">Chọn cách lấy ảnh: tải lên, camera hoặc RTSP</p>
             </div>
           </div>
 
-          <div
-            class="drop-zone"
-            id="dropZone"
-            role="button"
-            tabindex="0"
-            aria-label="Kéo thả ảnh vào đây hoặc nhấn để chọn ảnh"
-            aria-describedby="dropZoneHelp"
-          >
-            <div class="drop-zone-inner" id="dropZoneInner">
-              <div class="drop-icon">🖼️</div>
-              <p class="drop-title">Kéo & Thả ảnh vào đây</p>
-              <p class="drop-subtitle" id="dropZoneHelp">hoặc nhấn để chọn file</p>
-              <p class="drop-formats">JPG · PNG · WEBP · tối đa 10MB</p>
+          <!-- Source Tabs -->
+          <div class="source-tabs" id="sourceTabs" role="tablist" aria-label="Loại nguồn ảnh">
+            <button class="source-tab active" id="tab-upload" data-source="upload" role="tab" aria-selected="true">
+              <span class="tab-icon">🖼️</span><span>Tải Ảnh</span>
+            </button>
+            <button class="source-tab" id="tab-camera" data-source="camera" role="tab" aria-selected="false">
+              <span class="tab-icon">📸</span><span>Camera</span>
+            </button>
+            <button class="source-tab" id="tab-rtsp" data-source="rtsp" role="tab" aria-selected="false">
+              <span class="tab-icon">🛰️</span><span>RTSP</span>
+            </button>
+          </div>
+
+          <!-- Upload Panel -->
+          <div class="source-panel-body" id="sourceBody-upload" role="tabpanel">
+            <div class="drop-zone" id="dropZone" role="button" tabindex="0"
+              aria-label="Kéo thả ảnh vào đây hoặc nhấn để chọn ảnh" aria-describedby="dropZoneHelp">
+              <div class="drop-zone-inner" id="dropZoneInner">
+                <p class="drop-title">Kéo & Thả ảnh vào đây</p>
+                <p class="drop-subtitle" id="dropZoneHelp">hoặc nhấn để chọn file</p>
+                <p class="drop-formats">JPG · PNG · WEBP · tối đa 10MB</p>
+              </div>
             </div>
-            <img id="previewImg" class="preview-img hidden" alt="Ảnh đã tải lên" />
-            <div class="preview-overlay hidden" id="previewOverlay">
-              <button class="change-btn" id="changeImgBtn" aria-label="Thay đổi ảnh">
-                <span>🔄</span> Đổi ảnh
+            <input type="file" id="fileInput" accept="image/*" class="hidden" aria-hidden="true" />
+          </div>
+
+          <!-- Camera Panel -->
+          <div class="source-panel-body hidden" id="sourceBody-camera" role="tabpanel">
+            <div class="live-preview" id="cameraPreviewWrap">
+              <video id="cameraVideo" autoplay playsinline></video>
+              <canvas id="cameraCanvas" class="hidden"></canvas>
+              <div class="live-preview-placeholder" id="cameraPlaceholder">
+                <p class="drop-title">Đang mở camera...</p>
+                <p class="drop-subtitle">Vui lòng cho phép trình duyệt truy cập camera</p>
+              </div>
+            </div>
+            <div class="source-actions">
+              <button id="captureCameraBtn" class="secondary-btn primary-action" disabled>
+                <span>⚡</span> Chụp Ảnh
               </button>
             </div>
           </div>
-          
-          <div style="margin-top: 1rem; text-align: center;">
-             <button id="openCameraBtn" class="change-btn" style="width: 100%; justify-content: center; padding: 12px; background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.3); color: var(--text-primary);">
-               <span style="margin-right: 8px;">📸</span> Chụp ảnh từ Camera
-             </button>
-          </div>
 
-          <input type="file" id="fileInput" accept="image/*" class="hidden" aria-hidden="true" />
-
-          <!-- Camera Modal -->
-          <div id="cameraModal" class="camera-modal hidden">
-            <div class="camera-modal-content">
-              <div class="camera-header">
-                <h3>Chụp ảnh</h3>
-                <button id="closeCameraBtn" class="close-btn">&times;</button>
+          <!-- RTSP Panel -->
+          <div class="source-panel-body hidden" id="sourceBody-rtsp" role="tabpanel">
+            <div class="live-preview" id="rtspPreviewWrap">
+              <div class="live-preview-placeholder" id="rtspPlaceholder">
+                <p class="drop-title">Chưa kết nối RTSP</p>
+                <p class="drop-subtitle">Nhập địa chỉ stream rồi nhấn Enter để kết nối</p>
+                <p class="rtsp-note">⚠️ Tính năng RTSP đang trong giai đoạn phát triển (chỉ giao diện demo).</p>
               </div>
-              <div class="camera-body">
-                <video id="cameraVideo" autoplay playsinline></video>
-                <canvas id="cameraCanvas" class="hidden"></canvas>
-              </div>
-              <div class="camera-footer" style="margin-top: 10px;">
-                <button id="captureBtn" class="transform-btn" style="width: 100%; justify-content: center;" aria-label="Chụp ảnh">
-                  <span class="transform-btn-content">
-                    <span class="btn-icon">📸</span>
-                    <span>Chụp & Dùng ảnh này</span>
-                  </span>
-                </button>
-              </div>
+            </div>
+            <div class="rtsp-input-row">
+              <input type="text" id="rtspUrlInput" class="rtsp-url-input"
+                placeholder="rtsp://user:pass@192.168.1.10:554/stream" aria-label="Địa chỉ RTSP" />
+              <button id="rtspActionBtn" class="secondary-btn primary-action" data-mode="capture" disabled>
+                <span>⚡</span> Lấy Khung Hình
+              </button>
             </div>
           </div>
         </section>
 
-        <!-- ── Middle Panel: Controls ─────────────────────────────── -->
+        <!-- ── Right: Captured/Recorded Image ──────────────────────── -->
+        <section class="panel captured-panel" aria-label="Ảnh ghi nhận">
+          <div class="panel-header">
+            <div class="panel-icon">🖼️</div>
+            <div>
+              <h2 class="panel-title">Ảnh Ghi Nhận</h2>
+              <p class="panel-subtitle" id="capturedSubtitle">Chưa có ảnh nào được ghi nhận</p>
+            </div>
+          </div>
+
+          <div class="captured-img-wrap" id="capturedImgWrap">
+            <img id="previewImg" class="captured-img hidden" alt="Ảnh ghi nhận" />
+            <div class="captured-placeholder" id="capturedPlaceholder">
+              <p class="placeholder-text">Ảnh ghi nhận sẽ hiển thị ở đây</p>
+              <p class="placeholder-hint">Tải ảnh, chụp camera, hoặc capture RTSP ở ô Đầu Vào để bắt đầu</p>
+            </div>
+          </div>
+        </section>
+
+      </div><!-- /.row-grid -->
+
+      <!-- ── Row 2: Captured Image + Output Result ────────────────────── -->
+      <div class="row-grid row-grid-second">
+
+        <!-- ── Left: Profession + Controls ─────────────────────────── -->
         <section class="panel controls-panel" aria-label="Tùy chọn biến đổi">
           <div class="panel-header">
-            <div class="panel-icon">⚡</div>
+            <div class="panel-icon">👔</div>
             <div>
               <h2 class="panel-title">Chọn Nghề Nghiệp</h2>
               <p class="panel-subtitle">AI sẽ thay toàn bộ trang phục</p>
@@ -125,60 +158,68 @@
 
           <!-- Profession Buttons -->
           <div class="profession-grid" id="professionGrid" role="radiogroup" aria-label="Loại nghề nghiệp">
-            <button
-              class="profession-btn"
-              id="btn-police"
-              data-profession="police"
-              role="radio"
-              aria-checked="false"
-              aria-label="Cảnh sát"
-            >
-              <span class="prof-icon">🚔</span>
+            <button class="profession-btn" id="btn-police" data-profession="police" role="radio" aria-checked="false"
+              aria-label="Cảnh sát">
+              <span class="prof-icon">👮</span>
               <span class="prof-label">Cảnh Sát</span>
-              <span class="prof-label-en">Police</span>
+              <span class="prof-item-icon">🚔</span>
               <div class="prof-glow police-glow"></div>
             </button>
 
-            <button
-              class="profession-btn"
-              id="btn-doctor"
-              data-profession="doctor"
-              role="radio"
-              aria-checked="false"
-              aria-label="Bác sĩ"
-            >
-              <span class="prof-icon">🏥</span>
+            <button class="profession-btn" id="btn-doctor" data-profession="doctor" role="radio" aria-checked="false"
+              aria-label="Bác sĩ">
+              <span class="prof-icon">🧑‍⚕️</span>
               <span class="prof-label">Bác Sĩ</span>
-              <span class="prof-label-en">Doctor</span>
+              <span class="prof-item-icon">🏥</span>
               <div class="prof-glow doctor-glow"></div>
             </button>
 
-            <button
-              class="profession-btn"
-              id="btn-teacher"
-              data-profession="teacher"
-              role="radio"
-              aria-checked="false"
-              aria-label="Giáo viên"
-            >
-              <span class="prof-icon">📚</span>
+            <button class="profession-btn" id="btn-teacher" data-profession="teacher" role="radio" aria-checked="false"
+              aria-label="Giáo viên">
+              <span class="prof-icon">🧑‍🏫</span>
               <span class="prof-label">Giáo Viên</span>
-              <span class="prof-label-en">Teacher</span>
+              <span class="prof-item-icon">📚</span>
               <div class="prof-glow teacher-glow"></div>
             </button>
 
-            <button
-              class="profession-btn"
-              id="btn-singer"
-              data-profession="singer"
-              role="radio"
-              aria-checked="false"
-              aria-label="Ca sĩ"
-            >
-              <span class="prof-icon">🎤</span>
+            <button class="profession-btn" id="btn-singer" data-profession="singer" role="radio" aria-checked="false"
+              aria-label="Ca sĩ">
+              <span class="prof-icon">🧑‍🎤</span>
               <span class="prof-label">Ca Sĩ</span>
-              <span class="prof-label-en">Singer</span>
+              <span class="prof-item-icon">🎤</span>
               <div class="prof-glow singer-glow"></div>
+            </button>
+
+            <button class="profession-btn" id="btn-firefighter" data-profession="firefighter" role="radio"
+              aria-checked="false" aria-label="Lính cứu hỏa">
+              <span class="prof-icon">🧑‍🚒</span>
+              <span class="prof-label">Lính Cứu Hỏa</span>
+              <span class="prof-item-icon">🚒</span>
+              <div class="prof-glow firefighter-glow"></div>
+            </button>
+
+            <button class="profession-btn" id="btn-pilot" data-profession="pilot" role="radio" aria-checked="false"
+              aria-label="Phi công">
+              <span class="prof-icon">🧑‍✈️</span>
+              <span class="prof-label">Phi Công</span>
+              <span class="prof-item-icon">✈️</span>
+              <div class="prof-glow pilot-glow"></div>
+            </button>
+
+            <button class="profession-btn" id="btn-chef" data-profession="chef" role="radio" aria-checked="false"
+              aria-label="Đầu bếp">
+              <span class="prof-icon">👨‍🍳</span>
+              <span class="prof-label">Đầu Bếp</span>
+              <span class="prof-item-icon">🔪</span>
+              <div class="prof-glow chef-glow"></div>
+            </button>
+
+            <button class="profession-btn" id="btn-engineer" data-profession="engineer" role="radio"
+              aria-checked="false" aria-label="Kỹ sư">
+              <span class="prof-icon">👷</span>
+              <span class="prof-label">Kỹ Sư</span>
+              <span class="prof-item-icon">🔧</span>
+              <div class="prof-glow engineer-glow"></div>
             </button>
           </div>
 
@@ -186,21 +227,12 @@
           <div class="provider-section hidden">
             <h3 class="section-label">🤖 Chọn AI</h3>
             <div class="provider-toggle" role="group" aria-label="AI Provider">
-              <button
-                class="provider-btn active"
-                id="providerOpenai"
-                data-provider="openai"
-                aria-pressed="true"
-              >
-                <img src="https://upload.wikimedia.org/wikipedia/commons/4/4d/OpenAI_Logo.svg" alt="" class="provider-logo" aria-hidden="true" />
+              <button class="provider-btn active" id="providerOpenai" data-provider="openai" aria-pressed="true">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/4/4d/OpenAI_Logo.svg" alt=""
+                  class="provider-logo" aria-hidden="true" />
                 <span>OpenAI</span>
               </button>
-              <button
-                class="provider-btn"
-                id="providerGemini"
-                data-provider="gemini"
-                aria-pressed="false"
-              >
+              <button class="provider-btn" id="providerGemini" data-provider="gemini" aria-pressed="false">
                 <span class="gemini-icon" aria-hidden="true">✦</span>
                 <span>Gemini</span>
               </button>
@@ -209,20 +241,13 @@
 
           <!-- Transform Button -->
           <button class="transform-btn" id="transformBtn" disabled aria-label="Biến đổi trang phục">
+            <div class="btn-progress-fill" id="btnProgressFill"></div>
             <span class="transform-btn-content" id="transformBtnContent">
               <span class="btn-icon">✨</span>
               <span>Biến Đổi Ngay</span>
             </span>
             <div class="btn-shimmer"></div>
           </button>
-
-          <!-- Progress -->
-          <div class="progress-section hidden" id="progressSection" role="status" aria-live="polite">
-            <div class="progress-bar-wrap">
-              <div class="progress-bar" id="progressBar"></div>
-            </div>
-            <p class="progress-text" id="progressText">Đang xử lý...</p>
-          </div>
 
           <!-- Error -->
           <div class="error-box hidden" id="errorBox" role="alert" aria-live="assertive">
@@ -231,23 +256,18 @@
           </div>
         </section>
 
-        <!-- ── Right Panel: Result ────────────────────────────────── -->
+        <!-- ── Right: Output Result ────────────────────────────────── -->
         <section class="panel result-panel" aria-label="Kết quả biến đổi" aria-live="polite">
           <div class="panel-header">
             <div class="panel-icon">🌟</div>
             <div>
               <h2 class="panel-title">Kết Quả</h2>
-              <p class="panel-subtitle" id="resultSubtitle">Chưa có kết quả</p>
+              <p class="panel-subtitle" id="resultSubtitle">Chưa có kết quả biến đổi</p>
             </div>
           </div>
 
           <!-- Placeholder -->
           <div class="result-placeholder" id="resultPlaceholder" aria-hidden="true">
-            <div class="placeholder-anim">
-              <div class="placeholder-ring"></div>
-              <div class="placeholder-ring r2"></div>
-              <div class="placeholder-ring r3"></div>
-            </div>
             <p class="placeholder-text">Kết quả sẽ hiển thị ở đây</p>
             <p class="placeholder-hint">Tải ảnh lên và chọn nghề nghiệp để bắt đầu</p>
           </div>
@@ -269,7 +289,7 @@
           </div>
         </section>
 
-      </div><!-- /.content-grid -->
+      </div><!-- /.row-grid-second -->
 
       <!-- ── Compare Section ────────────────────────────────────────── -->
       <section class="compare-section hidden" id="compareSection" aria-label="So sánh trước và sau">

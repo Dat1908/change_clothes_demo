@@ -4,41 +4,9 @@ import logging
 import google.generativeai as genai
 from PIL import Image
 from config import GEMINI_API_KEY, GEMINI_API_KEY_2, GEMINI_MODEL_NAME
+from services.prompts import PROMPTS, NEGATIVE_PROMPT
 
 logger = logging.getLogger(__name__)
-
-PROMPTS = {
-    "police": (
-        "Ultra-photorealistic raw photo, 8k resolution, taken with DSLR, natural lighting. "
-        "Keep the exact same number of people and identities. Change only clothing to a plain green Vietnamese criminal police uniform for all people in the image. "
-        "Keep the same faces, bodies, hairstyles, and poses. Professional police-related background. "
-        "Lifelike textures, natural skin, unedited photography."
-    ),
-    "doctor": (
-        "Ultra-photorealistic raw photo, 8k resolution, taken with DSLR, natural lighting. "
-        "Keep the exact same number of people and identities. Change only clothing to a white doctor coat with a professional medical look for all people in the image. "
-        "Keep the same faces, bodies, hairstyles, and poses. Clean hospital or clinic background. "
-        "Lifelike textures, natural skin, unedited photography."
-    ),
-    "teacher": (
-        "Ultra-photorealistic raw photo, 8k resolution, taken with DSLR, natural lighting. "
-        "Keep the exact same number of people and identities. Change only clothing to a neat professional teacher outfit for all people in the image. "
-        "Keep the same faces, bodies, hairstyles, and poses. Classroom or school background. "
-        "Lifelike textures, natural skin, unedited photography."
-    ),
-    "singer": (
-        "Ultra-photorealistic raw photo, 8k resolution, taken with DSLR, natural lighting. "
-        "Keep the exact same number of people and identities. Change only clothing to an elegant professional singer stage outfit for all people in the image. "
-        "Keep the same faces, bodies, hairstyles, and poses. Concert or stage background. "
-        "Lifelike textures, natural skin, unedited photography."
-    ),
-}
-
-NEGATIVE_PROMPT = (
-    "different identity, changed face, "
-    "deformed face, bad eyes, bad anatomy, blurry, low quality, text, watermark, logo, "
-    "illustration, painting, cartoon, anime, 3d render, CGI, plastic, smooth skin, overly retouched, digital art, artificial looking"
-)
 
 
 def change_clothes_gemini(image_bytes: bytes, profession: str) -> str:
