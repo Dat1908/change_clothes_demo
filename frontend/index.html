@@ -40,7 +40,7 @@
       <!-- ── Hero ──────────────────────────────────────────────────── -->
       <section class="hero" aria-labelledby="heroTitle">
         <h1 id="heroTitle" class="hero-title">
-          Biến Hóa <span class="gradient-text">Trang Phục</span> Bằng AI
+          Chỉnh sửa <span class="gradient-text">Trang Phục</span> Bằng AI
         </h1>
         <p class="hero-subtitle">
           Tải ảnh của bạn lên, chọn nghề nghiệp — AI sẽ thay đổi trang phục trong vài giây.
@@ -81,8 +81,36 @@
               </button>
             </div>
           </div>
+          
+          <div style="margin-top: 1rem; text-align: center;">
+             <button id="openCameraBtn" class="change-btn" style="width: 100%; justify-content: center; padding: 12px; background: rgba(139,92,246,0.1); border: 1px solid rgba(139,92,246,0.3); color: var(--text-primary);">
+               <span style="margin-right: 8px;">📸</span> Chụp ảnh từ Camera
+             </button>
+          </div>
 
           <input type="file" id="fileInput" accept="image/*" class="hidden" aria-hidden="true" />
+
+          <!-- Camera Modal -->
+          <div id="cameraModal" class="camera-modal hidden">
+            <div class="camera-modal-content">
+              <div class="camera-header">
+                <h3>Chụp ảnh</h3>
+                <button id="closeCameraBtn" class="close-btn">&times;</button>
+              </div>
+              <div class="camera-body">
+                <video id="cameraVideo" autoplay playsinline></video>
+                <canvas id="cameraCanvas" class="hidden"></canvas>
+              </div>
+              <div class="camera-footer" style="margin-top: 10px;">
+                <button id="captureBtn" class="transform-btn" style="width: 100%; justify-content: center;" aria-label="Chụp ảnh">
+                  <span class="transform-btn-content">
+                    <span class="btn-icon">📸</span>
+                    <span>Chụp & Dùng ảnh này</span>
+                  </span>
+                </button>
+              </div>
+            </div>
+          </div>
         </section>
 
         <!-- ── Middle Panel: Controls ─────────────────────────────── -->
@@ -155,7 +183,7 @@
           </div>
 
           <!-- AI Provider -->
-          <div class="provider-section">
+          <div class="provider-section hidden">
             <h3 class="section-label">🤖 Chọn AI</h3>
             <div class="provider-toggle" role="group" aria-label="AI Provider">
               <button
@@ -263,7 +291,7 @@
   </main>
 
   <!-- ── Footer ──────────────────────────────────────────────────────── -->
-  <footer class="footer">
+  <footer class="footer hidden">
     <p>AI Outfit Studio · Powered by <strong>OpenAI GPT-Image</strong> & <strong>Google Gemini</strong></p>
   </footer>
 

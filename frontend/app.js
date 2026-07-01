@@ -132,6 +132,56 @@ changeImgBtn.addEventListener("click", (e) => {
   fileInput.click();
 });
 
+// ── Camera Feature ────────────────────────────────────────────────────────
+const openCameraBtn = document.getElementById("openCameraBtn");
+const cameraModal = document.getElementById("cameraModal");
+const closeCameraBtn = document.getElementById("closeCameraBtn");
+const cameraVideo = document.getElementById("cameraVideo");
+const cameraCanvas = document.getElementById("cameraCanvas");
+const captureBtn = document.getElementById("captureBtn");
+let videoStream = null;
+
+openCameraBtn.addEventListener("click", async () => {
+  try {
+    videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+    cameraVideo.srcObject = videoStream;
+    cameraModal.classList.remove("hidden");
+  } catch (err) {
+    showError("Không thể mở Camera: " + err.message);
+  }
+});
+
+function stopCamera() {
+  if (videoStream) {
+    videoStream.getTracks().forEach(track => track.stop());
+    videoStream = null;
+  }
+  cameraVideo.srcObject = null;
+  cameraModal.classList.add("hidden");
+}
+
+closeCameraBtn.addEventListener("click", stopCamera);
+
+captureBtn.addEventListener("click", () => {
+  if (!videoStream) return;
+  const width = cameraVideo.videoWidth;
+  const height = cameraVideo.videoHeight;
+  if (!width || !height) return;
+  
+  cameraCanvas.width = width;
+  cameraCanvas.height = height;
+  const ctx = cameraCanvas.getContext("2d");
+  ctx.drawImage(cameraVideo, 0, 0, width, height);
+  
+  cameraCanvas.toBlob((blob) => {
+    if (blob) {
+      const file = new File([blob], "camera_capture.jpg", { type: "image/jpeg" });
+      handleFile(file);
+      stopCamera();
+    }
+  }, "image/jpeg", 0.9);
+});
+
 // ── Profession Selection ──────────────────────────────────────────────────
 professionBtns.forEach((btn) => {
   btn.addEventListener("click", () => {
@@ -235,44 +285,57 @@ transformBtn.addEventListener("click", async () => {
   startProgress();
 
   try {
-    const formData = new FormData();
-    formData.append("image", state.imageFile);
-    formData.append("profession", state.selectedProfession);
-    formData.append("ai_provider", state.selectedProvider);
+    async function attemptTransform(provider) {
+      const formData = new FormData();
+      formData.append("image", state.imageFile);
+      formData.append("profession", state.selectedProfession);
+      formData.append("ai_provider", provider);
 
-    // 1. Submit task
-    const res = await fetch(`${API_BASE}/api/tasks/change-clothes`, {
-      method: "POST",
-      body: formData,
-    });
+      // 1. Submit task
+      const res = await fetch(`${API_BASE}/api/tasks/change-clothes`, {
+        method: "POST",
+        body: formData,
+      });
 
-    const data = await res.json();
+      const data = await res.json();
 
-    if (!res.ok) {
-      throw new Error(data.detail || `Lỗi server: ${res.status}`);
+      if (!res.ok) {
+        throw new Error(data.detail || `Lỗi server: ${res.status}`);
+      }
+
+      const taskId = data.task_id;
+      
+      // 2. Poll for status
+      let taskResult = null;
+      while (true) {
+        await new Promise(resolve => setTimeout(resolve, 2000)); // Poll every 2s
+        
+        const pollRes = await fetch(`${API_BASE}/api/tasks/${taskId}`);
+        const pollData = await pollRes.json();
+        
+        if (!pollRes.ok) {
+          throw new Error(pollData.detail || `Lỗi server: ${pollRes.status}`);
+        }
+        
+        if (pollData.status === "completed") {
+          taskResult = pollData;
+          break;
+        } else if (pollData.status === "failed") {
+          throw new Error(pollData.error || "Quá trình xử lý thất bại.");
+        }
+        // if processing, continue loop
+      }
+      return taskResult;
     }
 
-    const taskId = data.task_id;
-    
-    // 2. Poll for status
     let taskResult = null;
-    while (true) {
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Poll every 2s
-      
-      const pollRes = await fetch(`${API_BASE}/api/tasks/${taskId}`);
-      const pollData = await pollRes.json();
-      
-      if (!pollRes.ok) {
-        throw new Error(pollData.detail || `Lỗi server: ${pollRes.status}`);
-      }
-      
-      if (pollData.status === "completed") {
-        taskResult = pollData;
-        break;
-      } else if (pollData.status === "failed") {
-        throw new Error(pollData.error || "Quá trình xử lý thất bại.");
-      }
-      // if processing, continue loop
+    let providerUsed = "openai";
+    try {
+      taskResult = await attemptTransform("openai");
+    } catch (err) {
+      console.warn("OpenAI failed, falling back to Gemini...", err);
+      providerUsed = "gemini";
+      taskResult = await attemptTransform("gemini");
     }
 
     state.resultB64 = taskResult.result_image_b64;
@@ -286,7 +349,7 @@ transformBtn.addEventListener("click", async () => {
     resultBadge.style.background   = profInfo.badgeBg;
     resultBadge.style.border       = `1px solid ${profInfo.badgeBorder}`;
 
-    resultSubtitle.textContent = `${profInfo.icon} ${profInfo.label} · ${state.selectedProvider.toUpperCase()}`;
+    resultSubtitle.textContent = `${profInfo.icon} ${profInfo.label}`;
 
     resultPlaceholder.classList.add("hidden");
     resultImgWrap.classList.remove("hidden");

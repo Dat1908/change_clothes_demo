@@ -551,3 +551,39 @@ body {
   border-radius: 50%;
   animation: btnSpin 0.8s linear infinite;
 }
+
+/* ── Camera Modal ──────────────────────────────────────────────────────── */
+.camera-modal {
+  position: fixed; inset: 0; z-index: 999;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(5px);
+}
+.camera-modal.hidden {
+  display: none !important;
+}
+.camera-modal-content {
+  background: var(--bg-panel);
+  border-radius: var(--radius-xl);
+  padding: 24px; width: 90%; max-width: 500px;
+  box-shadow: var(--shadow-panel);
+  display: flex; flex-direction: column; gap: 16px;
+}
+.camera-header {
+  display: flex; justify-content: space-between; align-items: center;
+}
+.camera-header h3 {
+  font-family: var(--font-display); font-size: 1.2rem;
+}
+.close-btn {
+  background: none; border: none; font-size: 1.5rem; color: var(--text-muted);
+  cursor: pointer; transition: var(--transition);
+}
+.close-btn:hover { color: var(--text-primary); }
+.camera-body {
+  border-radius: var(--radius-lg); overflow: hidden;
+  background: #000; aspect-ratio: 3/4; display: flex; align-items: center; justify-content: center;
+}
+#cameraVideo {
+  width: 100%; height: 100%; object-fit: cover;
+}
