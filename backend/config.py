@@ -9,6 +9,7 @@ load_dotenv(dotenv_path=env_path)
 OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
 GPT_MODEL_NAME: str = os.getenv("GPT_MODEL_NAME", "gpt-image-1")
 GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+GEMINI_API_KEY_2: str = os.getenv("GEMINI_API_KEY_2", "")
 GEMINI_MODEL_NAME: str = os.getenv("GEMINI_MODEL_NAME", "gemini-2.0-flash-exp")
 
 # Validate required keys
