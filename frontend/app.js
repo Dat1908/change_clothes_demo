@@ -18,18 +18,26 @@ const state = {
 const dropZone = document.getElementById("dropZone");
 const previewImg = document.getElementById("previewImg");
 const fileInput = document.getElementById("fileInput");
-const capturedPlaceholder = document.getElementById("capturedPlaceholder");
-const capturedSubtitle = document.getElementById("capturedSubtitle");
+const sourceSubtitle = document.getElementById("sourceSubtitle");
+const frozenImgWrap = document.getElementById("frozenImgWrap");
+const removeImgBtn = document.getElementById("removeImgBtn");
 
 const sourceTabs = document.querySelectorAll(".source-tab");
 const sourceBodies = {
 	upload: document.getElementById("sourceBody-upload"),
 	camera: document.getElementById("sourceBody-camera"),
-	rtsp: document.getElementById("sourceBody-rtsp"),
 };
 
 const professionBtns = document.querySelectorAll(".profession-btn");
 const providerBtns = document.querySelectorAll(".provider-btn");
+
+const professionPicker = document.getElementById("professionPicker");
+const professionSlotEmpty = document.getElementById("professionSlotEmpty");
+const professionSlotFilled = document.getElementById("professionSlotFilled");
+const slotPhotoIcon = document.getElementById("slotPhotoIcon");
+const slotPersonIcon = document.getElementById("slotPersonIcon");
+const slotLabel = document.getElementById("slotLabel");
+const removeSlotBtn = document.getElementById("removeSlotBtn");
 
 const transformBtn = document.getElementById("transformBtn");
 const transformContent = document.getElementById("transformBtnContent");
@@ -38,21 +46,21 @@ const errorBox = document.getElementById("errorBox");
 const errorMessage = document.getElementById("errorMessage");
 
 const resultPlaceholder = document.getElementById("resultPlaceholder");
+const placeholderText = document.getElementById("placeholderText");
+const placeholderSpinner = document.getElementById("placeholderSpinner");
 const resultImgWrap = document.getElementById("resultImgWrap");
 const resultImg = document.getElementById("resultImg");
 const resultTimeBadge = document.getElementById("resultTimeBadge");
-const resultActions = document.getElementById("resultActions");
 const resultSubtitle = document.getElementById("resultSubtitle");
 const downloadBtn = document.getElementById("downloadBtn");
-const shareBtn = document.getElementById("shareBtn");
 
-const compareSection = document.getElementById("compareSection");
+// Wipe-slider elements inside the result box (original → transformed)
 const compareOriginal = document.getElementById("compareOriginal");
-const compareResult = document.getElementById("compareResult");
-const afterLabel = document.getElementById("afterLabel");
+const compareAfterWrap = document.getElementById("compareAfterWrap");
+const compareSliderHandle = document.getElementById("compareSliderHandle");
 
 const statusDot = document.getElementById("statusDot");
-const statusText = document.getElementById("statusText");
+const headerStatus = document.getElementById("headerStatus");
 
 // ── Profession Metadata ───────────────────────────────────────────────────
 const PROFESSIONS = {
@@ -60,6 +68,7 @@ const PROFESSIONS = {
 		label: "An Ninh Nhân Dân",
 		personIcon: "👮",
 		itemIcon: "",
+		photoIcon: "assets/icons/an_ninh_nhan_dan.png",
 		color: "#10b981",
 		badgeBg: "rgba(16,185,129,0.35)",
 		badgeBorder: "#10b981",
@@ -68,6 +77,7 @@ const PROFESSIONS = {
 		label: "Cảnh Sát Nhân Dân",
 		personIcon: "👮",
 		itemIcon: "",
+		photoIcon: "assets/icons/canh_sat_nhan_dan.png",
 		color: "#10b981",
 		badgeBg: "rgba(16,185,129,0.35)",
 		badgeBorder: "#10b981",
@@ -76,6 +86,7 @@ const PROFESSIONS = {
 		label: "Cảnh Sát Giao Thông",
 		personIcon: "👮",
 		itemIcon: "",
+		photoIcon: "assets/icons/canh_sat_giao_thong.png",
 		color: "#10b981",
 		badgeBg: "rgba(16,185,129,0.35)",
 		badgeBorder: "#10b981",
@@ -84,6 +95,7 @@ const PROFESSIONS = {
 		label: "Cảnh Sát Cơ Động",
 		personIcon: "👮",
 		itemIcon: "",
+		photoIcon: "assets/icons/canh_sat_co_dong.png",
 		color: "#10b981",
 		badgeBg: "rgba(16,185,129,0.35)",
 		badgeBorder: "#10b981",
@@ -92,6 +104,7 @@ const PROFESSIONS = {
 		label: "Cảnh Sát Đặc Nhiệm",
 		personIcon: "👮",
 		itemIcon: "",
+		photoIcon: "assets/icons/canh_sat_dac_nhiem.png",
 		color: "#10b981",
 		badgeBg: "rgba(16,185,129,0.35)",
 		badgeBorder: "#10b981",
@@ -100,6 +113,7 @@ const PROFESSIONS = {
 		label: "Cảnh Sát PCCC",
 		personIcon: "👮",
 		itemIcon: "",
+		photoIcon: "assets/icons/canh_sat_pccc.png",
 		color: "#10b981",
 		badgeBg: "rgba(16,185,129,0.35)",
 		badgeBorder: "#10b981",
@@ -163,16 +177,18 @@ async function checkHealth() {
 			signal: AbortSignal.timeout(5000),
 		});
 		const data = await res.json();
-		if (data.status === "ok" || data.status === "degraded") {
+		if (data.status === "ok") {
 			statusDot.className = "status-dot online";
-			statusText.textContent =
-				data.status === "ok" ? "API sẵn sàng" : "API khởi động (thiếu key)";
+			headerStatus.title = "API sẵn sàng";
+		} else if (data.status === "degraded") {
+			statusDot.className = "status-dot warning";
+			headerStatus.title = "API khởi động (thiếu key)";
 		} else {
 			throw new Error("Bad status");
 		}
 	} catch {
 		statusDot.className = "status-dot offline";
-		statusText.textContent = "API chưa kết nối";
+		headerStatus.title = "API chưa kết nối";
 	}
 }
 checkHealth();
@@ -195,19 +211,57 @@ function handleFile(file) {
 	reader.onload = (e) => {
 		state.imageDataUrl = e.target.result;
 		previewImg.src = state.imageDataUrl;
-		previewImg.classList.remove("hidden");
-		capturedPlaceholder.classList.add("hidden");
-		capturedSubtitle.textContent = "Sẵn sàng để biến đổi";
+		freezeImage();
 		hideError();
 		updateTransformBtn();
-		setTimeout(() => {
-			document
-				.querySelector(".controls-panel")
-				.scrollIntoView({ behavior: "smooth", block: "start" });
-		}, 500);
 	};
 	reader.readAsDataURL(file);
 }
+
+// Track which source tab was active before freezing, so removing the image
+// can return the user to the same tab (e.g. straight back to the camera)
+// instead of always resetting to Upload.
+let lastActiveSource = "upload";
+
+// Freeze the captured/uploaded image: hide the source tabs + camera/upload
+// body, show the frozen preview with an X button to start over.
+function freezeImage() {
+	const activeTab = document.querySelector(".source-tab.active");
+	if (activeTab) lastActiveSource = activeTab.dataset.source;
+	stopCamera();
+	sourceTabs.forEach((t) => t.classList.add("hidden"));
+	Object.values(sourceBodies).forEach((el) => el.classList.add("hidden"));
+	frozenImgWrap.classList.remove("hidden");
+	sourceSubtitle.textContent = "Sẵn sàng để biến đổi";
+}
+
+function unfreezeImage() {
+	state.imageFile = null;
+	state.imageDataUrl = null;
+	previewImg.src = "";
+	// Reset the file input so re-selecting the same file still fires "change".
+	fileInput.value = "";
+	frozenImgWrap.classList.add("hidden");
+	sourceTabs.forEach((t) => t.classList.remove("hidden"));
+	sourceBodies.upload.classList.toggle("hidden", lastActiveSource !== "upload");
+	sourceBodies.camera.classList.toggle("hidden", lastActiveSource !== "camera");
+	sourceTabs.forEach((t) => {
+		const isActive = t.dataset.source === lastActiveSource;
+		t.classList.toggle("active", isActive);
+		t.setAttribute("aria-selected", isActive ? "true" : "false");
+	});
+	sourceSubtitle.textContent = "Chọn cách lấy ảnh: tải lên hoặc camera";
+	hideError();
+	if (lastActiveSource === "camera") {
+		openCamera();
+	}
+	updateTransformBtn();
+}
+
+removeImgBtn.addEventListener("click", () => {
+	if (state.isLoading) return;
+	unfreezeImage();
+});
 
 // Drag & drop
 dropZone.addEventListener("dragover", (e) => {
@@ -277,6 +331,7 @@ let lastVideoTime = -1;
 let fingersUpDuration = 0;
 let lastDetectionTime = 0;
 let isCountingDown = false;
+let countdownIntervalId = null;
 
 async function initMediaPipe() {
 	if (hands) return;
@@ -297,7 +352,13 @@ async function initMediaPipe() {
 async function detectHandsLoop() {
 	if (!videoStream || !isDetecting) return;
 
-	if (isMediaPipeReady && autoCaptureToggle.checked && !isCountingDown) {
+	// Guard against sending a frame before the video has real dimensions —
+	// MediaPipe's WASM graph throws an unrecoverable fatal error on a
+	// zero-size frame, permanently breaking hand detection for the rest of
+	// the page's life (only the first camera session would ever work).
+	const hasValidFrame = cameraVideo.videoWidth > 0 && cameraVideo.videoHeight > 0;
+
+	if (isMediaPipeReady && hasValidFrame && autoCaptureToggle.checked && !isCountingDown) {
 		if (cameraVideo.currentTime !== lastVideoTime) {
 			lastVideoTime = cameraVideo.currentTime;
 			try {
@@ -323,8 +384,17 @@ function stopHandDetection() {
 		cancelAnimationFrame(detectLoopId);
 		detectLoopId = null;
 	}
+	if (countdownIntervalId) {
+		clearInterval(countdownIntervalId);
+		countdownIntervalId = null;
+	}
 	isCountingDown = false;
 	countdownOverlay.classList.add('hidden');
+	// Reset gesture-tracking accumulators so a fresh camera session doesn't
+	// inherit stale timing from the previous one.
+	fingersUpDuration = 0;
+	lastDetectionTime = 0;
+	lastVideoTime = -1;
 }
 
 function onHandsResult(results) {
@@ -368,7 +438,7 @@ function startCountdown() {
 	let count = 3;
 	countdownText.textContent = count;
 
-	const interval = setInterval(() => {
+	countdownIntervalId = setInterval(() => {
 		count--;
 		if (count > 0) {
 			countdownText.style.animation = 'none';
@@ -376,7 +446,8 @@ function startCountdown() {
 			countdownText.style.animation = null;
 			countdownText.textContent = count;
 		} else {
-			clearInterval(interval);
+			clearInterval(countdownIntervalId);
+			countdownIntervalId = null;
 			countdownOverlay.classList.add('hidden');
 			captureCameraBtn.click();
 			isCountingDown = false;
@@ -519,31 +590,49 @@ captureCameraBtn.addEventListener("click", () => {
 	);
 });
 
-// ── RTSP Feature (UI only, backend not implemented yet) ──────────────────
-const rtspUrlInput = document.getElementById("rtspUrlInput");
-const rtspActionBtn = document.getElementById("rtspActionBtn");
-const rtspPreviewWrap = document.getElementById("rtspPreviewWrap");
-const rtspPlaceholder = document.getElementById("rtspPlaceholder");
-
-function connectRtsp() {
-	const url = rtspUrlInput.value.trim();
-	if (!url) {
-		showError("Vui lòng nhập địa chỉ RTSP.");
-		return;
+// ── Profession Selection ──────────────────────────────────────────────────
+function fillProfessionSlot(profession) {
+	const info = PROFESSIONS[profession];
+	if (info.photoIcon) {
+		slotPhotoIcon.src = info.photoIcon;
+		slotPhotoIcon.classList.remove("hidden");
+		slotPersonIcon.classList.add("hidden");
+	} else {
+		slotPersonIcon.textContent = info.personIcon;
+		slotPersonIcon.classList.remove("hidden");
+		slotPhotoIcon.classList.add("hidden");
 	}
-	showError("Kết nối RTSP chưa được hỗ trợ ở backend. Đây là giao diện demo.");
-
-	rtspActionBtn.disabled = true;
+	slotLabel.textContent = info.label;
+	professionSlotEmpty.classList.add("hidden");
+	professionSlotFilled.classList.remove("hidden");
 }
 
-rtspUrlInput.addEventListener("keydown", (e) => {
-	if (e.key === "Enter") {
-		e.preventDefault();
-		connectRtsp();
-	}
-});
+function clearProfessionSlot() {
+	state.selectedProfession = null;
+	professionBtns.forEach((b) => {
+		b.classList.remove("selected");
+		b.setAttribute("aria-checked", "false");
+	});
+	professionSlotFilled.classList.add("hidden");
+	professionSlotEmpty.classList.remove("hidden");
+	professionPicker.classList.remove("hidden");
 
-// ── Profession Selection ──────────────────────────────────────────────────
+	// If a previous result existed, it no longer matches — reset back to the
+	// placeholder, and swap the transform button back from the time badge
+	// to "Biến Đổi Ngay" so the next run starts fresh.
+	if (state.resultB64) {
+		state.resultB64 = null;
+		resultImgWrap.classList.add("hidden");
+		downloadBtn.classList.add("hidden");
+		resultTimeBadge.classList.add("hidden");
+		resultPlaceholder.classList.add("hidden");
+		transformContent.classList.remove("hidden");
+		transformBtn.classList.remove("is-done");
+	}
+
+	updateTransformBtn();
+}
+
 professionBtns.forEach((btn) => {
 	btn.addEventListener("click", () => {
 		state.selectedProfession = btn.dataset.profession;
@@ -555,9 +644,15 @@ professionBtns.forEach((btn) => {
 		btn.classList.add("selected");
 		btn.setAttribute("aria-checked", "true");
 
+		fillProfessionSlot(state.selectedProfession);
 		hideError();
 		updateTransformBtn();
 	});
+});
+
+removeSlotBtn.addEventListener("click", () => {
+	if (state.isLoading) return;
+	clearProfessionSlot();
 });
 
 // ── Provider Selection ────────────────────────────────────────────────────
@@ -576,7 +671,10 @@ providerBtns.forEach((btn) => {
 // ── Transform Button State ────────────────────────────────────────────────
 function updateTransformBtn() {
 	const canTransform =
-		state.imageFile && state.selectedProfession && !state.isLoading;
+		state.imageFile &&
+		state.selectedProfession &&
+		!state.isLoading &&
+		!state.resultB64;
 	transformBtn.disabled = !canTransform;
 }
 
@@ -596,6 +694,9 @@ transformBtn.addEventListener("click", async () => {
 	state.isLoading = true;
 	hideError();
 	const requestStartedAt = performance.now();
+	// Snapshot the profession so a mid-flight "remove" click (which sets
+	// state.selectedProfession back to null) can't break the completion handler.
+	const transformingProfession = state.selectedProfession;
 
 	// Button loading state
 	transformBtn.disabled = true;
@@ -604,21 +705,28 @@ transformBtn.addEventListener("click", async () => {
 
 	// Disable capture buttons while inferring — no new frame can be grabbed mid-transform
 	captureCameraBtn.disabled = true;
-	const rtspWasReady = rtspActionBtn.dataset.mode === "capture" && !rtspActionBtn.disabled;
-	rtspActionBtn.disabled = true;
 
-	// Reset result area
+	// Lock the image and profession slots during the transform — no swapping
+	// the source photo or profession mid-flight.
+	removeImgBtn.disabled = true;
+	removeImgBtn.classList.add("is-disabled");
+	removeSlotBtn.disabled = true;
+	removeSlotBtn.classList.add("is-disabled");
+
+	// Hide the profession picker right away and show the waiting screen
+	// in its place — no need to wait for the result to come back.
+	professionPicker.classList.add("hidden");
 	resultImgWrap.classList.add("hidden");
-	resultActions.classList.add("hidden");
+	downloadBtn.classList.add("hidden");
 	resultTimeBadge.classList.add("hidden");
-	compareSection.classList.add("hidden");
+	placeholderSpinner.classList.remove("hidden");
 	resultPlaceholder.classList.remove("hidden");
 
 	try {
 		async function attemptTransform(provider) {
 			const formData = new FormData();
 			formData.append("image", state.imageFile);
-			formData.append("profession", state.selectedProfession);
+			formData.append("profession", transformingProfession);
 			formData.append("ai_provider", provider);
 
 			// 1. Submit task
@@ -696,72 +804,66 @@ transformBtn.addEventListener("click", async () => {
 		}
 
 		state.resultB64 = taskResult.result_image_b64;
-		const profInfo = PROFESSIONS[state.selectedProfession];
 
 		// Update result panel
 		const resultSrc = `data:image/png;base64,${state.resultB64}`;
 		resultImg.src = resultSrc;
+		compareOriginal.src = state.imageDataUrl;
 
 		const elapsedSeconds = (performance.now() - requestStartedAt) / 1000;
 		resultTimeBadge.textContent = `⏱️ ${elapsedSeconds.toFixed(1)}s`;
 		resultTimeBadge.classList.remove("hidden");
-
-		const iconParts = [profInfo.personIcon, profInfo.label, profInfo.itemIcon].filter(Boolean);
-		resultSubtitle.innerHTML = `Hóa thân thành ${iconParts.join(" ")}`;
+		transformContent.classList.add("hidden");
+		transformBtn.classList.add("is-done");
 
 		resultPlaceholder.classList.add("hidden");
 		resultImgWrap.classList.remove("hidden");
-		resultActions.classList.remove("hidden");
+		downloadBtn.classList.remove("hidden");
+		professionPicker.classList.add("hidden");
 
-		// Compare section
-		compareOriginal.src = state.imageDataUrl;
-		compareResult.src = resultSrc;
-		const afterParts = [profInfo.personIcon, profInfo.label.toUpperCase(), profInfo.itemIcon].filter(Boolean);
-		afterLabel.textContent = afterParts.join(" ");
-		compareSection.classList.remove("hidden");
-		compareSection.scrollIntoView({ behavior: "smooth", block: "nearest" });
+		// Restart the wipe animation from scratch (CSS "forwards" animations
+		// only play once, so force a reflow to re-trigger them each time).
+		compareAfterWrap.style.animation = "none";
+		compareSliderHandle.style.animation = "none";
+		void compareAfterWrap.offsetWidth;
+		compareAfterWrap.style.animation = "";
+		compareSliderHandle.style.animation = "";
 	} catch (err) {
 		console.error("Transform error:", err);
 		showError(err.message || "Đã có lỗi xảy ra. Vui lòng thử lại.");
+		// Transform failed — let the user pick a profession again.
+		resultPlaceholder.classList.add("hidden");
+		professionPicker.classList.remove("hidden");
 	} finally {
+		placeholderSpinner.classList.add("hidden");
 		state.isLoading = false;
 		transformBtn.classList.remove("is-loading");
 		transformContent.innerHTML = `<span class="btn-icon">✨</span><span>Biến Đổi Ngay</span>`;
+		// Only re-reveal the button text on failure — on success it stays
+		// replaced by the time badge until the profession slot is cleared.
+		if (!state.resultB64) {
+			transformContent.classList.remove("hidden");
+		}
 		updateTransformBtn();
 
-		// Re-enable capture buttons only if their underlying source is still ready
+		// Unlock the image and profession slots now that the transform is done.
+		removeImgBtn.disabled = false;
+		removeImgBtn.classList.remove("is-disabled");
+		removeSlotBtn.disabled = false;
+		removeSlotBtn.classList.remove("is-disabled");
+
+		// Re-enable capture button only if the camera stream is still active
 		captureCameraBtn.disabled = !videoStream;
-		if (rtspWasReady) rtspActionBtn.disabled = false;
 	}
 });
 
 // ── Download Result ───────────────────────────────────────────────────────
-downloadBtn.addEventListener("click", () => {
+function downloadResult() {
 	if (!state.resultB64) return;
-	const profInfo = PROFESSIONS[state.selectedProfession] || { label: "result" };
 	const a = document.createElement("a");
 	a.href = `data:image/png;base64,${state.resultB64}`;
 	a.download = `outfit_${state.selectedProfession}_${Date.now()}.png`;
 	a.click();
-});
+}
+downloadBtn.addEventListener("click", downloadResult);
 
-// ── Copy / Share Result ───────────────────────────────────────────────────
-shareBtn.addEventListener("click", async () => {
-	if (!state.resultB64) return;
-	try {
-		const blob = await (
-			await fetch(`data:image/png;base64,${state.resultB64}`)
-		).blob();
-		await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
-		shareBtn.innerHTML = `<span>✅</span> Đã sao chép!`;
-		setTimeout(() => {
-			shareBtn.innerHTML = `<span>📋</span> Sao Chép`;
-		}, 2000);
-	} catch {
-		// Fallback: open in new tab
-		const win = window.open();
-		win.document.write(
-			`<img src="data:image/png;base64,${state.resultB64}" style="max-width:100%" />`,
-		);
-	}
-});

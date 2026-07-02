@@ -12,8 +12,11 @@ router = APIRouter()
 async def health_check():
     """Health check endpoint."""
     errors = validate_config()
+    # At least one AI provider key is enough to serve requests; only degrade
+    # when neither key is configured (both providers unusable).
+    has_any_key = bool(OPENAI_API_KEY) or bool(GEMINI_API_KEY)
     return {
-        "status": "ok" if not errors else "degraded",
+        "status": "ok" if has_any_key else "degraded",
         "config_errors": errors,
         "openai_model": GPT_MODEL_NAME,
         "gemini_model": GEMINI_MODEL_NAME,
@@ -30,9 +33,49 @@ async def get_professions():
                 "id": "an_ninh_nhan_dan",
                 "label": "An Ninh Nhân Dân",
                 "label_en": "People's Security",
-                "icon": "👮🚔",
+                "icon": "👮",
                 "color": "#10b981",
                 "description": "Đồng phục an ninh nhân dân Việt Nam",
+            },
+            {
+                "id": "canh_sat_nhan_dan",
+                "label": "Cảnh Sát Nhân Dân",
+                "label_en": "People's Police",
+                "icon": "👮",
+                "color": "#10b981",
+                "description": "Đồng phục cảnh sát nhân dân Việt Nam",
+            },
+            {
+                "id": "canh_sat_giao_thong",
+                "label": "Cảnh Sát Giao Thông",
+                "label_en": "Traffic Police",
+                "icon": "👮",
+                "color": "#10b981",
+                "description": "Đồng phục cảnh sát giao thông",
+            },
+            {
+                "id": "canh_sat_co_dong",
+                "label": "Cảnh Sát Cơ Động",
+                "label_en": "Mobile Police",
+                "icon": "👮",
+                "color": "#10b981",
+                "description": "Đồng phục cảnh sát cơ động",
+            },
+            {
+                "id": "canh_sat_dac_nhiem",
+                "label": "Cảnh Sát Đặc Nhiệm",
+                "label_en": "Special Task Police",
+                "icon": "👮",
+                "color": "#10b981",
+                "description": "Đồng phục cảnh sát đặc nhiệm",
+            },
+            {
+                "id": "canh_sat_pccc",
+                "label": "Cảnh Sát PCCC",
+                "label_en": "Fire Prevention Police",
+                "icon": "👮",
+                "color": "#10b981",
+                "description": "Đồng phục cảnh sát phòng cháy chữa cháy",
             },
             {
                 "id": "doctor",
@@ -57,14 +100,6 @@ async def get_professions():
                 "icon": "🎤",
                 "color": "#ec4899",
                 "description": "Trang phục biểu diễn ca sĩ",
-            },
-            {
-                "id": "firefighter",
-                "label": "Lính Cứu Hỏa",
-                "label_en": "Firefighter",
-                "icon": "🚒",
-                "color": "#ef4444",
-                "description": "Đồng phục lính cứu hỏa chuyên nghiệp",
             },
             {
                 "id": "pilot",
@@ -98,13 +133,17 @@ async def get_professions():
 async def create_change_clothes_task(
     background_tasks: BackgroundTasks,
     image: UploadFile = File(..., description="Input person image (JPG/PNG)"),
-    profession: str = Form(..., description="Profession: an_ninh_nhan_dan | doctor | teacher | singer | firefighter | pilot | chef | engineer"),
+    profession: str = Form(..., description="Profession: an_ninh_nhan_dan | canh_sat_nhan_dan | canh_sat_giao_thong | canh_sat_co_dong | canh_sat_dac_nhiem | canh_sat_pccc | doctor | teacher | singer | pilot | chef | engineer"),
     ai_provider: str = Form(default="openai", description="AI provider: openai | gemini"),
 ):
     """
     Submit a task to transform clothing. Returns a task_id immediately.
     """
-    allowed_professions = {"an_ninh_nhan_dan", "doctor", "teacher", "singer", "firefighter", "pilot", "chef", "engineer"}
+    allowed_professions = {
+        "an_ninh_nhan_dan", "canh_sat_nhan_dan", "canh_sat_giao_thong",
+        "canh_sat_co_dong", "canh_sat_dac_nhiem", "canh_sat_pccc",
+        "doctor", "teacher", "singer", "pilot", "chef", "engineer",
+    }
     allowed_providers = {"openai", "gemini"}
 
     profession = profession.lower().strip()
