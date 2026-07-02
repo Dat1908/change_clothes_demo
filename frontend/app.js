@@ -40,7 +40,7 @@ const errorMessage = document.getElementById("errorMessage");
 const resultPlaceholder = document.getElementById("resultPlaceholder");
 const resultImgWrap = document.getElementById("resultImgWrap");
 const resultImg = document.getElementById("resultImg");
-const resultBadge = document.getElementById("resultBadge");
+const resultTimeBadge = document.getElementById("resultTimeBadge");
 const resultActions = document.getElementById("resultActions");
 const resultSubtitle = document.getElementById("resultSubtitle");
 const downloadBtn = document.getElementById("downloadBtn");
@@ -58,56 +58,64 @@ const statusText = document.getElementById("statusText");
 const PROFESSIONS = {
 	police: {
 		label: "Cảnh Sát",
-		icon: "👮🚔",
+		personIcon: "👮",
+		itemIcon: "🚔",
 		color: "#10b981",
 		badgeBg: "rgba(16,185,129,0.35)",
 		badgeBorder: "#10b981",
 	},
 	doctor: {
 		label: "Bác Sĩ",
-		icon: "🧑‍⚕️🏥",
+		personIcon: "🧑‍⚕️",
+		itemIcon: "🏥",
 		color: "#3b82f6",
 		badgeBg: "rgba(59,130,246,0.35)",
 		badgeBorder: "#3b82f6",
 	},
 	teacher: {
 		label: "Giáo Viên",
-		icon: "🧑‍🏫📚",
+		personIcon: "🧑‍🏫",
+		itemIcon: "📚",
 		color: "#f59e0b",
 		badgeBg: "rgba(245,158,11,0.35)",
 		badgeBorder: "#f59e0b",
 	},
 	singer: {
 		label: "Ca Sĩ",
-		icon: "🧑‍🎤🎤",
+		personIcon: "🧑‍🎤",
+		itemIcon: "🎤",
 		color: "#ec4899",
 		badgeBg: "rgba(236,72,153,0.35)",
 		badgeBorder: "#ec4899",
 	},
 	firefighter: {
 		label: "Lính Cứu Hỏa",
-		icon: "🧑‍🚒🚒",
+		personIcon: "🧑‍🚒",
+		itemIcon: "🚒",
 		color: "#ef4444",
 		badgeBg: "rgba(239,68,68,0.35)",
 		badgeBorder: "#ef4444",
 	},
 	pilot: {
 		label: "Phi Công",
-		icon: "🧑‍✈️✈️",
+		personIcon: "🧑‍✈️",
+		itemIcon: "✈️",
 		color: "#06b6d4",
 		badgeBg: "rgba(6,182,212,0.35)",
 		badgeBorder: "#06b6d4",
 	},
 	chef: {
 		label: "Đầu Bếp",
-		icon: "👨‍🍳🔪",
+		personIcon: "👨‍🍳",
+		itemIcon: "🔪",
 		color: "#a855f7",
 		badgeBg: "rgba(168,85,247,0.35)",
 		badgeBorder: "#a855f7",
 	},
 	engineer: {
 		label: "Kỹ Sư",
-		icon: "👷🔧",
+		personIcon: "👷",
+		itemIcon: "🔧",
 		color: "#eab308",
 		badgeBg: "rgba(234,179,8,0.35)",
 		badgeBorder: "#eab308",
@@ -428,6 +436,7 @@ transformBtn.addEventListener("click", async () => {
 
 	state.isLoading = true;
 	hideError();
+	const requestStartedAt = performance.now();
 
 	// Button loading state
 	transformBtn.disabled = true;
@@ -442,6 +451,7 @@ transformBtn.addEventListener("click", async () => {
 	// Reset result area
 	resultImgWrap.classList.add("hidden");
 	resultActions.classList.add("hidden");
+	resultTimeBadge.classList.add("hidden");
 	compareSection.classList.add("hidden");
 	resultPlaceholder.classList.remove("hidden");
 
@@ -533,11 +543,11 @@ transformBtn.addEventListener("click", async () => {
 		const resultSrc = `data:image/png;base64,${state.resultB64}`;
 		resultImg.src = resultSrc;
 
-		resultBadge.textContent = `${profInfo.icon} ${profInfo.label}`;
-		resultBadge.style.background = profInfo.badgeBg;
-		resultBadge.style.border = `1px solid ${profInfo.badgeBorder}`;
+		const elapsedSeconds = (performance.now() - requestStartedAt) / 1000;
+		resultTimeBadge.textContent = `⏱️ ${elapsedSeconds.toFixed(1)}s`;
+		resultTimeBadge.classList.remove("hidden");
 
-		resultSubtitle.textContent = `Hóa thân thành ${profInfo.label}`;
+		resultSubtitle.innerHTML = `Hóa thân thành ${profInfo.personIcon} ${profInfo.label} ${profInfo.itemIcon}`;
 
 		resultPlaceholder.classList.add("hidden");
 		resultImgWrap.classList.remove("hidden");
@@ -546,7 +556,7 @@ transformBtn.addEventListener("click", async () => {
 		// Compare section
 		compareOriginal.src = state.imageDataUrl;
 		compareResult.src = resultSrc;
-		afterLabel.textContent = `${profInfo.icon} ${profInfo.label.toUpperCase()}`;
+		afterLabel.textContent = `${profInfo.personIcon} ${profInfo.label.toUpperCase()} ${profInfo.itemIcon}`;
 		compareSection.classList.remove("hidden");
 		compareSection.scrollIntoView({ behavior: "smooth", block: "nearest" });
 	} catch (err) {

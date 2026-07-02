@@ -5,8 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AI Outfit Studio</title>
-  <meta name="description"
-    content="Ứng dụng AI thay đổi trang phục thông minh: Cảnh Sát, Bác Sĩ, Giáo Viên, Ca Sĩ. Powered by OpenAI & Google Gemini." />
+  <meta name="description" content="Ứng dụng AI thay đổi trang phục thông minh. Powered by OpenAI & Google Gemini." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
@@ -267,6 +266,7 @@
               <h2 class="panel-title">Kết Quả</h2>
               <p class="panel-subtitle" id="resultSubtitle">Chưa có kết quả biến đổi</p>
             </div>
+            <div class="result-time-badge hidden" id="resultTimeBadge"></div>
           </div>
 
           <!-- Placeholder -->
@@ -278,7 +278,6 @@
           <!-- Result Image -->
           <div class="result-img-wrap hidden" id="resultImgWrap">
             <img id="resultImg" class="result-img" alt="Ảnh sau khi biến đổi trang phục" />
-            <div class="result-badge" id="resultBadge"></div>
           </div>
 
           <!-- Actions -->
@@ -296,7 +295,7 @@
 
       <!-- ── Compare Section ────────────────────────────────────────── -->
       <section class="compare-section hidden" id="compareSection" aria-label="So sánh trước và sau">
-        <h2 class="section-title">So Sánh Trước & Sau</h2>
+        <h2 class="section-title">So Sánh Trước và Sau</h2>
         <div class="compare-grid">
           <div class="compare-card">
             <div class="compare-label before-label">TRƯỚC</div>

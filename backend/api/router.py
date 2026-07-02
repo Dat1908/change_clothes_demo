@@ -99,7 +99,7 @@ async def create_change_clothes_task(
     background_tasks: BackgroundTasks,
     image: UploadFile = File(..., description="Input person image (JPG/PNG)"),
     profession: str = Form(..., description="Profession: police | doctor | teacher | singer | firefighter | pilot | chef | engineer"),
-    ai_provider: str = Form(default="openai", description="AI provider: openai | gemini"),
+    ai_provider: str = Form(default="gemini", description="AI provider: openai | gemini"),
 ):
     """
     Submit a task to transform clothing. Returns a task_id immediately.
