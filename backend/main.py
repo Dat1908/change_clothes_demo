@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 # ─── App ────────────────────────────────────────────────────────────────────
 app = FastAPI(
     title="Clothing Change Demo API",
-    description="AI-powered clothing transformation API for police, doctor, teacher, singer outfits.",
+    description="AI-powered clothing transformation API for security, doctor, teacher, singer outfits.",
     version="1.0.0",
 )
 

@@ -58,8 +58,50 @@ const statusText = document.getElementById("statusText");
 const PROFESSIONS = {
 	cong_an_nhan_dan: {
 		label: "Công An Nhân Dân",
+	an_ninh_nhan_dan: {
+		label: "An Ninh Nhân Dân",
 		personIcon: "👮",
-		itemIcon: "🚔",
+		itemIcon: "",
+		color: "#10b981",
+		badgeBg: "rgba(16,185,129,0.35)",
+		badgeBorder: "#10b981",
+	},
+	canh_sat_nhan_dan: {
+		label: "Cảnh Sát Nhân Dân",
+		personIcon: "👮",
+		itemIcon: "",
+		color: "#10b981",
+		badgeBg: "rgba(16,185,129,0.35)",
+		badgeBorder: "#10b981",
+	},
+	canh_sat_giao_thong: {
+		label: "Cảnh Sát Giao Thông",
+		personIcon: "👮",
+		itemIcon: "",
+		color: "#10b981",
+		badgeBg: "rgba(16,185,129,0.35)",
+		badgeBorder: "#10b981",
+	},
+	canh_sat_co_dong: {
+		label: "Cảnh Sát Cơ Động",
+		personIcon: "👮",
+		itemIcon: "",
+		color: "#10b981",
+		badgeBg: "rgba(16,185,129,0.35)",
+		badgeBorder: "#10b981",
+	},
+	canh_sat_dac_nhiem: {
+		label: "Cảnh Sát Đặc Nhiệm",
+		personIcon: "👮",
+		itemIcon: "",
+		color: "#10b981",
+		badgeBg: "rgba(16,185,129,0.35)",
+		badgeBorder: "#10b981",
+	},
+	canh_sat_pccc: {
+		label: "Cảnh Sát PCCC",
+		personIcon: "👮",
+		itemIcon: "",
 		color: "#10b981",
 		badgeBg: "rgba(16,185,129,0.35)",
 		badgeBorder: "#10b981",
@@ -678,13 +720,13 @@ transformBtn.addEventListener("click", async () => {
 		}
 
 		let taskResult = null;
-		let providerUsed = "openai";
+		let providerUsed = "gemini";
 		try {
-			taskResult = await attemptTransform("openai");
-		} catch (err) {
-			console.warn("OpenAI failed, falling back to Gemini...", err);
-			providerUsed = "gemini";
 			taskResult = await attemptTransform("gemini");
+		} catch (err) {
+			console.warn("Gemini failed, falling back to OpenAI...", err);
+			providerUsed = "openai";
+			taskResult = await attemptTransform("openai");
 		}
 
 		state.resultB64 = taskResult.result_image_b64;
@@ -698,7 +740,8 @@ transformBtn.addEventListener("click", async () => {
 		resultTimeBadge.textContent = `⏱️ ${elapsedSeconds.toFixed(1)}s`;
 		resultTimeBadge.classList.remove("hidden");
 
-		resultSubtitle.innerHTML = `Hóa thân thành ${profInfo.personIcon} ${profInfo.label} ${profInfo.itemIcon}`;
+		const iconParts = [profInfo.personIcon, profInfo.label, profInfo.itemIcon].filter(Boolean);
+		resultSubtitle.innerHTML = `Hóa thân thành ${iconParts.join(" ")}`;
 
 		resultPlaceholder.classList.add("hidden");
 		resultImgWrap.classList.remove("hidden");
@@ -707,7 +750,8 @@ transformBtn.addEventListener("click", async () => {
 		// Compare section
 		compareOriginal.src = state.imageDataUrl;
 		compareResult.src = resultSrc;
-		afterLabel.textContent = `${profInfo.personIcon} ${profInfo.label.toUpperCase()} ${profInfo.itemIcon}`;
+		const afterParts = [profInfo.personIcon, profInfo.label.toUpperCase(), profInfo.itemIcon].filter(Boolean);
+		afterLabel.textContent = afterParts.join(" ");
 		compareSection.classList.remove("hidden");
 		compareSection.scrollIntoView({ behavior: "smooth", block: "nearest" });
 	} catch (err) {

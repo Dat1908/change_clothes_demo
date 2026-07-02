@@ -175,70 +175,98 @@
           </div>
 
           <!-- Profession Buttons -->
-          <div class="profession-grid" id="professionGrid" role="radiogroup" aria-label="Loại nghề nghiệp">
-            <button class="profession-btn" id="btn-police" data-profession="police" role="radio" aria-checked="false"
-              aria-label="Cảnh sát">
-              <span class="prof-icon">👮</span>
-              <span class="prof-label">Cảnh Sát</span>
-              <span class="prof-item-icon">🚔</span>
-              <div class="prof-glow police-glow"></div>
-            </button>
+          <div class="profession-group police-group" aria-label="Nhóm nghề công an">
+            <h3 class="profession-group-title police-group-title"><span class="flag-icon">🇻🇳</span> Lực Lượng Công An Nhân Dân</h3>
+            <div class="profession-grid" id="professionGridPolice" role="radiogroup" aria-label="Loại nghề công an">
+              <button class="profession-btn police-btn" id="btn-an_ninh_nhan_dan" data-profession="an_ninh_nhan_dan" role="radio" aria-checked="false"
+                aria-label="An ninh nhân dân">
+                <img class="prof-photo-icon" src="assets/icons/an_ninh_nhan_dan.png" alt="" />
+                <span class="prof-label">An Ninh Nhân Dân</span>
+                <div class="prof-glow an_ninh_nhan_dan-glow"></div>
+              </button>
 
-            <button class="profession-btn" id="btn-doctor" data-profession="doctor" role="radio" aria-checked="false"
-              aria-label="Bác sĩ">
-              <span class="prof-icon">🧑‍⚕️</span>
-              <span class="prof-label">Bác Sĩ</span>
-              <span class="prof-item-icon">🏥</span>
-              <div class="prof-glow doctor-glow"></div>
-            </button>
+              <button class="profession-btn police-btn" id="btn-canh_sat_nhan_dan" data-profession="canh_sat_nhan_dan" role="radio" aria-checked="false"
+                aria-label="Cảnh sát nhân dân">
+                <img class="prof-photo-icon" src="assets/icons/canh_sat_nhan_dan.png" alt="" />
+                <span class="prof-label">Cảnh Sát Nhân Dân</span>
+                <div class="prof-glow canh_sat_nhan_dan-glow"></div>
+              </button>
 
-            <button class="profession-btn" id="btn-teacher" data-profession="teacher" role="radio" aria-checked="false"
-              aria-label="Giáo viên">
-              <span class="prof-icon">🧑‍🏫</span>
-              <span class="prof-label">Giáo Viên</span>
-              <span class="prof-item-icon">📚</span>
-              <div class="prof-glow teacher-glow"></div>
-            </button>
+              <button class="profession-btn police-btn" id="btn-canh_sat_giao_thong" data-profession="canh_sat_giao_thong" role="radio" aria-checked="false"
+                aria-label="Cảnh sát giao thông">
+                <img class="prof-photo-icon" src="assets/icons/canh_sat_giao_thong.png" alt="" />
+                <span class="prof-label">Cảnh Sát Giao Thông</span>
+                <div class="prof-glow canh_sat_giao_thong-glow"></div>
+              </button>
 
-            <button class="profession-btn" id="btn-singer" data-profession="singer" role="radio" aria-checked="false"
-              aria-label="Ca sĩ">
-              <span class="prof-icon">🧑‍🎤</span>
-              <span class="prof-label">Ca Sĩ</span>
-              <span class="prof-item-icon">🎤</span>
-              <div class="prof-glow singer-glow"></div>
-            </button>
+              <button class="profession-btn police-btn" id="btn-canh_sat_co_dong" data-profession="canh_sat_co_dong" role="radio" aria-checked="false"
+                aria-label="Cảnh sát cơ động">
+                <img class="prof-photo-icon" src="assets/icons/canh_sat_co_dong.png" alt="" />
+                <span class="prof-label">Cảnh Sát Cơ Động</span>
+                <div class="prof-glow canh_sat_co_dong-glow"></div>
+              </button>
 
-            <button class="profession-btn" id="btn-firefighter" data-profession="firefighter" role="radio"
-              aria-checked="false" aria-label="Lính cứu hỏa">
-              <span class="prof-icon">🧑‍🚒</span>
-              <span class="prof-label">Lính Cứu Hỏa</span>
-              <span class="prof-item-icon">🚒</span>
-              <div class="prof-glow firefighter-glow"></div>
-            </button>
+              <button class="profession-btn police-btn" id="btn-canh_sat_dac_nhiem" data-profession="canh_sat_dac_nhiem" role="radio" aria-checked="false"
+                aria-label="Cảnh sát đặc nhiệm">
+                <img class="prof-photo-icon" src="assets/icons/canh_sat_dac_nhiem.png" alt="" />
+                <span class="prof-label">Cảnh Sát Đặc Nhiệm</span>
+                <div class="prof-glow canh_sat_dac_nhiem-glow"></div>
+              </button>
 
-            <button class="profession-btn" id="btn-pilot" data-profession="pilot" role="radio" aria-checked="false"
-              aria-label="Phi công">
-              <span class="prof-icon">🧑‍✈️</span>
-              <span class="prof-label">Phi Công</span>
-              <span class="prof-item-icon">✈️</span>
-              <div class="prof-glow pilot-glow"></div>
-            </button>
+              <button class="profession-btn police-btn" id="btn-canh_sat_pccc" data-profession="canh_sat_pccc" role="radio" aria-checked="false"
+                aria-label="Cảnh sát phòng cháy chữa cháy">
+                <img class="prof-photo-icon" src="assets/icons/canh_sat_pccc.png" alt="" />
+                <span class="prof-label">Cảnh Sát PCCC</span>
+                <div class="prof-glow canh_sat_pccc-glow"></div>
+              </button>
+            </div>
+          </div>
 
-            <button class="profession-btn" id="btn-chef" data-profession="chef" role="radio" aria-checked="false"
-              aria-label="Đầu bếp">
-              <span class="prof-icon">👨‍🍳</span>
-              <span class="prof-label">Đầu Bếp</span>
-              <span class="prof-item-icon">🔪</span>
-              <div class="prof-glow chef-glow"></div>
-            </button>
+          <div class="profession-group other-group" aria-label="Nhóm nghề khác">
+            <h3 class="profession-group-title">Nghề Nghiệp Khác</h3>
+            <div class="profession-grid" id="professionGridOther" role="radiogroup" aria-label="Loại nghề khác">
+              <button class="profession-btn" id="btn-doctor" data-profession="doctor" role="radio" aria-checked="false"
+                aria-label="Bác sĩ">
+                <span class="prof-icon">🧑‍⚕️</span>
+                <span class="prof-label">Bác Sĩ</span>
+                <div class="prof-glow doctor-glow"></div>
+              </button>
 
-            <button class="profession-btn" id="btn-engineer" data-profession="engineer" role="radio"
-              aria-checked="false" aria-label="Kỹ sư">
-              <span class="prof-icon">👷</span>
-              <span class="prof-label">Kỹ Sư</span>
-              <span class="prof-item-icon">🔧</span>
-              <div class="prof-glow engineer-glow"></div>
-            </button>
+              <button class="profession-btn" id="btn-teacher" data-profession="teacher" role="radio" aria-checked="false"
+                aria-label="Giáo viên">
+                <span class="prof-icon">🧑‍🏫</span>
+                <span class="prof-label">Giáo Viên</span>
+                <div class="prof-glow teacher-glow"></div>
+              </button>
+
+              <button class="profession-btn" id="btn-singer" data-profession="singer" role="radio" aria-checked="false"
+                aria-label="Ca sĩ">
+                <span class="prof-icon">🧑‍🎤</span>
+                <span class="prof-label">Ca Sĩ</span>
+                <div class="prof-glow singer-glow"></div>
+              </button>
+
+              <button class="profession-btn" id="btn-pilot" data-profession="pilot" role="radio" aria-checked="false"
+                aria-label="Phi công">
+                <span class="prof-icon">🧑‍✈️</span>
+                <span class="prof-label">Phi Công</span>
+                <div class="prof-glow pilot-glow"></div>
+              </button>
+
+              <button class="profession-btn" id="btn-chef" data-profession="chef" role="radio" aria-checked="false"
+                aria-label="Đầu bếp">
+                <span class="prof-icon">👨‍🍳</span>
+                <span class="prof-label">Đầu Bếp</span>
+                <div class="prof-glow chef-glow"></div>
+              </button>
+
+              <button class="profession-btn" id="btn-engineer" data-profession="engineer" role="radio"
+                aria-checked="false" aria-label="Kỹ sư">
+                <span class="prof-icon">👷</span>
+                <span class="prof-label">Kỹ Sư</span>
+                <div class="prof-glow engineer-glow"></div>
+              </button>
+            </div>
           </div>
 
           <!-- AI Provider -->
