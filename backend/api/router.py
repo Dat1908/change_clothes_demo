@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 
 from config import validate_config, OPENAI_API_KEY, GEMINI_API_KEY, GPT_MODEL_NAME, GEMINI_MODEL_NAME
 from services.task_service import create_task, get_task_status, run_clothing_transformation
+from services.prompts import PROMPTS
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -139,11 +140,7 @@ async def create_change_clothes_task(
     """
     Submit a task to transform clothing. Returns a task_id immediately.
     """
-    allowed_professions = {
-        "an_ninh_nhan_dan", "canh_sat_nhan_dan", "canh_sat_giao_thong",
-        "canh_sat_co_dong", "canh_sat_dac_nhiem", "canh_sat_pccc",
-        "doctor", "teacher", "singer", "pilot", "chef", "engineer",
-    }
+    allowed_professions = set(PROMPTS.keys())
     allowed_providers = {"openai", "gemini"}
 
     profession = profession.lower().strip()
