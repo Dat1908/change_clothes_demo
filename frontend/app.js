@@ -56,10 +56,50 @@ const statusText = document.getElementById("statusText");
 
 // ── Profession Metadata ───────────────────────────────────────────────────
 const PROFESSIONS = {
-	police: {
-		label: "Cảnh Sát",
+	an_ninh_nhan_dan: {
+		label: "An Ninh Nhân Dân",
 		personIcon: "👮",
-		itemIcon: "🚔",
+		itemIcon: "",
+		color: "#10b981",
+		badgeBg: "rgba(16,185,129,0.35)",
+		badgeBorder: "#10b981",
+	},
+	canh_sat_nhan_dan: {
+		label: "Cảnh Sát Nhân Dân",
+		personIcon: "👮",
+		itemIcon: "",
+		color: "#10b981",
+		badgeBg: "rgba(16,185,129,0.35)",
+		badgeBorder: "#10b981",
+	},
+	canh_sat_giao_thong: {
+		label: "Cảnh Sát Giao Thông",
+		personIcon: "👮",
+		itemIcon: "",
+		color: "#10b981",
+		badgeBg: "rgba(16,185,129,0.35)",
+		badgeBorder: "#10b981",
+	},
+	canh_sat_co_dong: {
+		label: "Cảnh Sát Cơ Động",
+		personIcon: "👮",
+		itemIcon: "",
+		color: "#10b981",
+		badgeBg: "rgba(16,185,129,0.35)",
+		badgeBorder: "#10b981",
+	},
+	canh_sat_dac_nhiem: {
+		label: "Cảnh Sát Đặc Nhiệm",
+		personIcon: "👮",
+		itemIcon: "",
+		color: "#10b981",
+		badgeBg: "rgba(16,185,129,0.35)",
+		badgeBorder: "#10b981",
+	},
+	canh_sat_pccc: {
+		label: "Cảnh Sát PCCC",
+		personIcon: "👮",
+		itemIcon: "",
 		color: "#10b981",
 		badgeBg: "rgba(16,185,129,0.35)",
 		badgeBorder: "#10b981",
@@ -88,14 +128,7 @@ const PROFESSIONS = {
 		badgeBg: "rgba(236,72,153,0.35)",
 		badgeBorder: "#ec4899",
 	},
-	firefighter: {
-		label: "Lính Cứu Hỏa",
-		personIcon: "🧑‍🚒",
-		itemIcon: "🚒",
-		color: "#ef4444",
-		badgeBg: "rgba(239,68,68,0.35)",
-		badgeBorder: "#ef4444",
-	},
+
 	pilot: {
 		label: "Phi Công",
 		personIcon: "🧑‍✈️",
@@ -231,12 +264,132 @@ const cameraSelect = document.getElementById("cameraSelect");
 let videoStream = null;
 let currentDeviceId = null;
 
+// ── Auto Capture (MediaPipe) ──────────────────────────────────────────────
+const autoCaptureToggle = document.getElementById("autoCaptureToggle");
+const countdownOverlay = document.getElementById("countdownOverlay");
+const countdownText = document.getElementById("countdownText");
+
+let hands = null;
+let isMediaPipeReady = false;
+let isDetecting = false;
+let detectLoopId = null;
+let lastVideoTime = -1;
+let fingersUpDuration = 0;
+let lastDetectionTime = 0;
+let isCountingDown = false;
+
+async function initMediaPipe() {
+	if (hands) return;
+	hands = new Hands({
+		locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+	});
+	hands.setOptions({
+		maxNumHands: 1,
+		modelComplexity: 1,
+		minDetectionConfidence: 0.6,
+		minTrackingConfidence: 0.6
+	});
+	hands.onResults(onHandsResult);
+	await hands.initialize();
+	isMediaPipeReady = true;
+}
+
+async function detectHandsLoop() {
+	if (!videoStream || !isDetecting) return;
+
+	if (isMediaPipeReady && autoCaptureToggle.checked && !isCountingDown) {
+		if (cameraVideo.currentTime !== lastVideoTime) {
+			lastVideoTime = cameraVideo.currentTime;
+			try {
+				await hands.send({ image: cameraVideo });
+			} catch (e) { }
+		}
+	}
+	detectLoopId = requestAnimationFrame(detectHandsLoop);
+}
+
+function startHandDetection() {
+	if (!isDetecting) {
+		isDetecting = true;
+		initMediaPipe().then(() => {
+			detectHandsLoop();
+		});
+	}
+}
+
+function stopHandDetection() {
+	isDetecting = false;
+	if (detectLoopId) {
+		cancelAnimationFrame(detectLoopId);
+		detectLoopId = null;
+	}
+	isCountingDown = false;
+	countdownOverlay.classList.add('hidden');
+}
+
+function onHandsResult(results) {
+	if (!autoCaptureToggle.checked || isCountingDown) return;
+
+	let openFingers = 0;
+	if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+		const landmarks = results.multiHandLandmarks[0];
+		// Index, Middle, Ring, Pinky
+		if (landmarks[8].y < landmarks[6].y) openFingers++;
+		if (landmarks[12].y < landmarks[10].y) openFingers++;
+		if (landmarks[16].y < landmarks[14].y) openFingers++;
+		if (landmarks[20].y < landmarks[18].y) openFingers++;
+		// Thumb: simple heuristic based on x distance from base
+		if (Math.abs(landmarks[4].x - landmarks[2].x) > 0.05) openFingers++;
+	}
+
+	const now = Date.now();
+	if (openFingers >= 4) { // Dơ 4-5 ngón là tính
+		if (lastDetectionTime === 0) {
+			lastDetectionTime = now;
+		} else {
+			fingersUpDuration += (now - lastDetectionTime);
+			lastDetectionTime = now;
+		}
+
+		if (fingersUpDuration > 1000) { // Giữ 1 giây
+			startCountdown();
+			fingersUpDuration = 0;
+			lastDetectionTime = 0;
+		}
+	} else {
+		fingersUpDuration = 0;
+		lastDetectionTime = 0;
+	}
+}
+
+function startCountdown() {
+	isCountingDown = true;
+	countdownOverlay.classList.remove('hidden');
+	let count = 3;
+	countdownText.textContent = count;
+
+	const interval = setInterval(() => {
+		count--;
+		if (count > 0) {
+			countdownText.style.animation = 'none';
+			countdownText.offsetHeight; // trigger reflow
+			countdownText.style.animation = null;
+			countdownText.textContent = count;
+		} else {
+			clearInterval(interval);
+			countdownOverlay.classList.add('hidden');
+			captureCameraBtn.click();
+			isCountingDown = false;
+		}
+	}, 1000);
+}
+
 async function populateCameraList() {
 	if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
 	try {
 		const devices = await navigator.mediaDevices.enumerateDevices();
 		const videoDevices = devices.filter(d => d.kind === 'videoinput');
-		
+
 		cameraSelect.innerHTML = '';
 		if (videoDevices.length > 0) {
 			cameraSelect.classList.remove('hidden');
@@ -246,13 +399,13 @@ async function populateCameraList() {
 				option.text = device.label || `Camera ${index + 1}`;
 				cameraSelect.appendChild(option);
 			});
-			
+
 			if (currentDeviceId && videoDevices.find(d => d.deviceId === currentDeviceId)) {
 				cameraSelect.value = currentDeviceId;
 			} else {
 				currentDeviceId = cameraSelect.value;
 			}
-			
+
 			cameraSelect.onchange = () => {
 				currentDeviceId = cameraSelect.value;
 				stopCamera();
@@ -293,6 +446,9 @@ async function openCamera() {
 		return;
 	}
 
+	// Populate camera list immediately so the user can choose even if stream hangs
+	await populateCameraList();
+
 	try {
 		const constraints = {
 			video: currentDeviceId ? { deviceId: { exact: currentDeviceId } } : { facingMode: "user" },
@@ -302,8 +458,10 @@ async function openCamera() {
 		cameraVideo.srcObject = videoStream;
 		cameraPreviewWrap.classList.add("is-live");
 		captureCameraBtn.disabled = false;
-		
+
+		// Re-populate to get real device names (after permission is granted)
 		await populateCameraList();
+		startHandDetection();
 	} catch (err) {
 		if (err.name === "NotAllowedError" || err.name === "SecurityError") {
 			showCameraError(
@@ -326,6 +484,7 @@ async function openCamera() {
 }
 
 function stopCamera() {
+	stopHandDetection();
 	if (videoStream) {
 		videoStream.getTracks().forEach((track) => track.stop());
 		videoStream = null;
@@ -527,13 +686,13 @@ transformBtn.addEventListener("click", async () => {
 		}
 
 		let taskResult = null;
-		let providerUsed = "openai";
+		let providerUsed = "gemini";
 		try {
-			taskResult = await attemptTransform("openai");
-		} catch (err) {
-			console.warn("OpenAI failed, falling back to Gemini...", err);
-			providerUsed = "gemini";
 			taskResult = await attemptTransform("gemini");
+		} catch (err) {
+			console.warn("Gemini failed, falling back to OpenAI...", err);
+			providerUsed = "openai";
+			taskResult = await attemptTransform("openai");
 		}
 
 		state.resultB64 = taskResult.result_image_b64;
@@ -547,7 +706,8 @@ transformBtn.addEventListener("click", async () => {
 		resultTimeBadge.textContent = `⏱️ ${elapsedSeconds.toFixed(1)}s`;
 		resultTimeBadge.classList.remove("hidden");
 
-		resultSubtitle.innerHTML = `Hóa thân thành ${profInfo.personIcon} ${profInfo.label} ${profInfo.itemIcon}`;
+		const iconParts = [profInfo.personIcon, profInfo.label, profInfo.itemIcon].filter(Boolean);
+		resultSubtitle.innerHTML = `Hóa thân thành ${iconParts.join(" ")}`;
 
 		resultPlaceholder.classList.add("hidden");
 		resultImgWrap.classList.remove("hidden");
@@ -556,7 +716,8 @@ transformBtn.addEventListener("click", async () => {
 		// Compare section
 		compareOriginal.src = state.imageDataUrl;
 		compareResult.src = resultSrc;
-		afterLabel.textContent = `${profInfo.personIcon} ${profInfo.label.toUpperCase()} ${profInfo.itemIcon}`;
+		const afterParts = [profInfo.personIcon, profInfo.label.toUpperCase(), profInfo.itemIcon].filter(Boolean);
+		afterLabel.textContent = afterParts.join(" ");
 		compareSection.classList.remove("hidden");
 		compareSection.scrollIntoView({ behavior: "smooth", block: "nearest" });
 	} catch (err) {

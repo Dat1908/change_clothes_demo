@@ -30,11 +30,10 @@ AI OUTFIT STUDIO — Premium Dark Theme
 	--accent-blue: #3b82f6;
 	--accent-amber: #f59e0b;
 
-	--police-color: #10b981;
+	--an_ninh_nhan_dan-color: #10b981;
 	--doctor-color: #3b82f6;
 	--teacher-color: #f59e0b;
 	--singer-color: #ec4899;
-	--firefighter-color: #ef4444;
 	--pilot-color: #06b6d4;
 	--chef-color: #a855f7;
 	--engineer-color: #eab308;
@@ -505,6 +504,53 @@ body {
 	display: none;
 }
 
+.countdown-overlay {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: rgba(0, 0, 0, 0.4);
+	z-index: 10;
+	border-radius: var(--radius-lg);
+}
+#countdownText {
+	font-size: 8rem;
+	font-weight: 900;
+	color: #fff;
+	text-shadow: 0 4px 20px rgba(0, 0, 0, 0.8), 0 0 40px var(--accent-purple);
+	animation: pop 1s ease-in-out infinite;
+}
+@keyframes pop {
+	0% { transform: scale(0.5); opacity: 0; }
+	50% { transform: scale(1.2); opacity: 1; }
+	100% { transform: scale(1); opacity: 0; }
+}
+
+.auto-capture-toggle {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 8px 12px;
+	background: var(--bg-surface);
+	border: 1.5px solid var(--border);
+	border-radius: var(--radius-md);
+	cursor: pointer;
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: var(--text-primary);
+	transition: all var(--transition);
+}
+.auto-capture-toggle:hover {
+	border-color: var(--border-hover);
+}
+.auto-capture-toggle input[type="checkbox"] {
+	accent-color: var(--accent-purple);
+	width: 16px;
+	height: 16px;
+	cursor: pointer;
+}
+
 .source-actions {
 	display: flex;
 	gap: 10px;
@@ -630,12 +676,53 @@ body {
 	opacity: 1;
 }
 
+/* ── Profession Groups ─────────────────────────────────────────────────── */
+.profession-group-title {
+	font-size: 0.85rem;
+	font-weight: 700;
+	color: var(--text-secondary);
+	letter-spacing: 0.3px;
+	margin-bottom: 12px;
+}
+.police-group {
+	background: rgba(16, 185, 129, 0.09);
+	border: 2px solid rgba(16, 185, 129, 0.4);
+	border-radius: var(--radius-lg);
+	padding: 16px;
+	margin-bottom: 20px;
+	box-shadow: 0 0 24px rgba(16, 185, 129, 0.12);
+}
+.police-group-title {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 1.1rem;
+	font-weight: 800;
+	color: #0d9166;
+}
+.flag-icon {
+	font-size: 1.7rem;
+	line-height: 1;
+}
+.other-group {
+	opacity: 0.9;
+}
+
 /* ── Profession Grid ───────────────────────────────────────────────────── */
 .profession-grid {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
 	gap: 16px;
+	margin-bottom: 0;
+}
+.other-group .profession-grid {
 	margin-bottom: 28px;
+}
+.police-group .profession-btn {
+	background: rgba(255, 255, 255, 0.6);
+}
+.other-group .profession-btn {
+	background: var(--bg-panel-hover);
 }
 .profession-btn {
 	position: relative;
@@ -670,10 +757,10 @@ body {
 .profession-btn.selected {
 	transform: translateY(-2px);
 }
-.profession-btn[data-profession="police"].selected {
-	border-color: var(--police-color);
-	box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
-	background: rgba(16, 185, 129, 0.08);
+.police-btn.selected {
+	border-color: #0d9166;
+	box-shadow: 0 0 20px rgba(16, 185, 129, 0.35);
+	background: rgba(16, 185, 129, 0.12);
 }
 .profession-btn[data-profession="doctor"].selected {
 	border-color: var(--doctor-color);
@@ -689,11 +776,6 @@ body {
 	border-color: var(--singer-color);
 	box-shadow: 0 0 20px rgba(236, 72, 153, 0.3);
 	background: rgba(236, 72, 153, 0.08);
-}
-.profession-btn[data-profession="firefighter"].selected {
-	border-color: var(--firefighter-color);
-	box-shadow: 0 0 20px rgba(239, 68, 68, 0.3);
-	background: rgba(239, 68, 68, 0.08);
 }
 .profession-btn[data-profession="pilot"].selected {
 	border-color: var(--pilot-color);
@@ -712,8 +794,15 @@ body {
 }
 
 .prof-icon {
-	font-size: 32px;
+	font-size: 40px;
 	flex-shrink: 0;
+}
+.prof-photo-icon {
+	width: 44px;
+	height: 44px;
+	object-fit: contain;
+	flex-shrink: 0;
+	border-radius: 6px;
 }
 .prof-label {
 	font-size: 0.95rem;
@@ -737,10 +826,15 @@ body {
 .profession-btn.selected .prof-glow {
 	opacity: 1;
 }
-.police-glow {
+.an_ninh_nhan_dan-glow,
+.canh_sat_nhan_dan-glow,
+.canh_sat_giao_thong-glow,
+.canh_sat_co_dong-glow,
+.canh_sat_dac_nhiem-glow,
+.canh_sat_pccc-glow {
 	background: radial-gradient(
 		ellipse at center,
-		rgba(16, 185, 129, 0.12) 0%,
+		rgba(16, 185, 129, 0.14) 0%,
 		transparent 70%
 	);
 }
@@ -762,13 +856,6 @@ body {
 	background: radial-gradient(
 		ellipse at center,
 		rgba(236, 72, 153, 0.12) 0%,
-		transparent 70%
-	);
-}
-.firefighter-glow {
-	background: radial-gradient(
-		ellipse at center,
-		rgba(239, 68, 68, 0.12) 0%,
 		transparent 70%
 	);
 }

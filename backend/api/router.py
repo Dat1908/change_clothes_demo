@@ -27,12 +27,12 @@ async def get_professions():
     return {
         "professions": [
             {
-                "id": "police",
-                "label": "Cảnh Sát",
-                "label_en": "Police",
+                "id": "an_ninh_nhan_dan",
+                "label": "An Ninh Nhân Dân",
+                "label_en": "People's Security",
                 "icon": "👮🚔",
                 "color": "#10b981",
-                "description": "Đồng phục cảnh sát nhân dân Việt Nam",
+                "description": "Đồng phục an ninh nhân dân Việt Nam",
             },
             {
                 "id": "doctor",
@@ -98,13 +98,13 @@ async def get_professions():
 async def create_change_clothes_task(
     background_tasks: BackgroundTasks,
     image: UploadFile = File(..., description="Input person image (JPG/PNG)"),
-    profession: str = Form(..., description="Profession: police | doctor | teacher | singer | firefighter | pilot | chef | engineer"),
-    ai_provider: str = Form(default="gemini", description="AI provider: openai | gemini"),
+    profession: str = Form(..., description="Profession: an_ninh_nhan_dan | doctor | teacher | singer | firefighter | pilot | chef | engineer"),
+    ai_provider: str = Form(default="openai", description="AI provider: openai | gemini"),
 ):
     """
     Submit a task to transform clothing. Returns a task_id immediately.
     """
-    allowed_professions = {"police", "doctor", "teacher", "singer", "firefighter", "pilot", "chef", "engineer"}
+    allowed_professions = {"an_ninh_nhan_dan", "doctor", "teacher", "singer", "firefighter", "pilot", "chef", "engineer"}
     allowed_providers = {"openai", "gemini"}
 
     profession = profession.lower().strip()
