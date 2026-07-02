@@ -12,6 +12,12 @@
     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap"
     rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
+
+  <!-- MediaPipe -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
 </head>
 
 <body>
@@ -92,12 +98,22 @@
             <div class="live-preview" id="cameraPreviewWrap">
               <video id="cameraVideo" autoplay playsinline></video>
               <canvas id="cameraCanvas" class="hidden"></canvas>
+
+              <!-- Countdown Overlay -->
+              <div id="countdownOverlay" class="countdown-overlay hidden">
+                <span id="countdownText">3</span>
+              </div>
+
               <div class="live-preview-placeholder" id="cameraPlaceholder">
                 <p class="drop-title">Đang mở camera...</p>
                 <p class="drop-subtitle">Vui lòng cho phép trình duyệt truy cập camera</p>
               </div>
             </div>
             <div class="source-actions">
+              <label class="auto-capture-toggle">
+                <input type="checkbox" id="autoCaptureToggle" checked>
+                <span class="toggle-label-text">✋ Tự động (5 ngón)</span>
+              </label>
               <select id="cameraSelect" class="camera-select hidden" aria-label="Chọn Camera"></select>
               <button id="captureCameraBtn" class="secondary-btn primary-action" disabled>
                 <span>⚡</span> Chụp Ảnh
@@ -317,7 +333,7 @@
     <p>AI Outfit Studio · Powered by <strong>OpenAI GPT-Image</strong> & <strong>Google Gemini</strong></p>
   </footer>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=2"></script>
 </body>
 
 </html>
