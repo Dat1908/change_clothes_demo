@@ -330,6 +330,17 @@ body {
 .live-preview:not(.is-live) video { display: none; }
 
 .source-actions { display: flex; gap: 10px; }
+.camera-select {
+  flex: 1;
+  padding: 12px 14px;
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-primary); font-size: 0.85rem;
+  font-family: var(--font-main);
+  outline: none;
+}
+.camera-select:focus { border-color: var(--accent-purple); }
 .secondary-btn {
   flex: 1;
   display: flex; align-items: center; justify-content: center; gap: 8px;

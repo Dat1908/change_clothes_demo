@@ -219,7 +219,44 @@ const cameraPreviewWrap = document.getElementById("cameraPreviewWrap");
 const cameraVideo = document.getElementById("cameraVideo");
 const cameraCanvas = document.getElementById("cameraCanvas");
 const cameraPlaceholder = document.getElementById("cameraPlaceholder");
+const cameraSelect = document.getElementById("cameraSelect");
 let videoStream = null;
+let currentDeviceId = null;
+
+async function populateCameraList() {
+	if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+	try {
+		const devices = await navigator.mediaDevices.enumerateDevices();
+		const videoDevices = devices.filter(d => d.kind === 'videoinput');
+		
+		cameraSelect.innerHTML = '';
+		if (videoDevices.length > 0) {
+			cameraSelect.classList.remove('hidden');
+			videoDevices.forEach((device, index) => {
+				const option = document.createElement('option');
+				option.value = device.deviceId;
+				option.text = device.label || `Camera ${index + 1}`;
+				cameraSelect.appendChild(option);
+			});
+			
+			if (currentDeviceId && videoDevices.find(d => d.deviceId === currentDeviceId)) {
+				cameraSelect.value = currentDeviceId;
+			} else {
+				currentDeviceId = cameraSelect.value;
+			}
+			
+			cameraSelect.onchange = () => {
+				currentDeviceId = cameraSelect.value;
+				stopCamera();
+				openCamera();
+			};
+		} else {
+			cameraSelect.classList.add('hidden');
+		}
+	} catch (e) {
+		console.error("Lỗi lấy danh sách camera", e);
+	}
+}
 
 function showCameraError(message) {
 	cameraPreviewWrap.classList.remove("is-live");
@@ -249,13 +286,16 @@ async function openCamera() {
 	}
 
 	try {
-		videoStream = await navigator.mediaDevices.getUserMedia({
-			video: { facingMode: "user" },
+		const constraints = {
+			video: currentDeviceId ? { deviceId: { exact: currentDeviceId } } : { facingMode: "user" },
 			audio: false,
-		});
+		};
+		videoStream = await navigator.mediaDevices.getUserMedia(constraints);
 		cameraVideo.srcObject = videoStream;
 		cameraPreviewWrap.classList.add("is-live");
 		captureCameraBtn.disabled = false;
+		
+		await populateCameraList();
 	} catch (err) {
 		if (err.name === "NotAllowedError" || err.name === "SecurityError") {
 			showCameraError(
