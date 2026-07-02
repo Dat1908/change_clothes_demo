@@ -56,8 +56,6 @@ const statusText = document.getElementById("statusText");
 
 // ── Profession Metadata ───────────────────────────────────────────────────
 const PROFESSIONS = {
-	cong_an_nhan_dan: {
-		label: "Công An Nhân Dân",
 	an_ninh_nhan_dan: {
 		label: "An Ninh Nhân Dân",
 		personIcon: "👮",
@@ -105,38 +103,6 @@ const PROFESSIONS = {
 		color: "#10b981",
 		badgeBg: "rgba(16,185,129,0.35)",
 		badgeBorder: "#10b981",
-	},
-	an_ninh_nhan_dan: {
-		label: "An Ninh Nhân Dân",
-		personIcon: "🕵️",
-		itemIcon: "🛡️",
-		color: "#059669",
-		badgeBg: "rgba(5,150,105,0.35)",
-		badgeBorder: "#059669",
-	},
-	canh_sat_giao_thong: {
-		label: "CS Giao Thông",
-		personIcon: "👮‍♂️",
-		itemIcon: "🚦",
-		color: "#eab308",
-		badgeBg: "rgba(234,179,8,0.35)",
-		badgeBorder: "#eab308",
-	},
-	canh_sat_co_dong: {
-		label: "Cảnh Sát Cơ Động",
-		personIcon: "🥷",
-		itemIcon: "🚓",
-		color: "#1f2937",
-		badgeBg: "rgba(31,41,55,0.35)",
-		badgeBorder: "#1f2937",
-	},
-	phong_chay_chua_chay: {
-		label: "Lính Cứu Hỏa",
-		personIcon: "🧑‍🚒",
-		itemIcon: "🚒",
-		color: "#ef4444",
-		badgeBg: "rgba(239,68,68,0.35)",
-		badgeBorder: "#ef4444",
 	},
 	doctor: {
 		label: "Bác Sĩ",
