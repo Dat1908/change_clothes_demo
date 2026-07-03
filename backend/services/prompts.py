@@ -2,7 +2,7 @@ PROMPTS = {
     "an_ninh_nhan_dan": (
         "Hình ảnh quần áo chính là đồng phục an ninh nhân dân Việt Nam"
         "Ảnh chụp RAW DSLR siêu thực, độ phân giải 4K, ánh sáng tự nhiên. "
-        "Bắt buộc sao chép y hệt 100% quần áo, trang phục, quân hàm, biển tên từ hình ảnh tham khảo. "
+        "Tuyệt đối bắt buộc phải sao chép y hệt và giữ đúng 100% chi tiết biển tên, quân hàm, logo và trang phục từ hình ảnh tham khảo. "
         "Tuyệt đối lấy khuôn mặt, biểu cảm, cơ thể, vóc dáng và tư thế từ ảnh gốc do người dùng cung cấp, không được phép thay đổi. "
         "Chỉ thay đổi quần áo thành đồng phục chuẩn của lực lượng An ninh nhân dân Việt Nam: "
         "Áo đồng phục cộc tay màu xanh cỏ úa, sơ vin gọn gàng trong quần màu sẫm màu đồng bộ với thắt lưng đen có logo vàng như ảnh đi kèm."
@@ -15,7 +15,7 @@ PROMPTS = {
     "canh_sat_co_dong": (
         "Hình ảnh quần áo chính là đồng phục Cảnh Sát Cơ Động Việt Nam"
         "Ảnh chụp RAW DSLR siêu thực, độ phân giải 4K, ánh sáng tự nhiên."
-        "Bắt buộc sao chép y hệt 100% quần áo, trang phục, quân hàm, biển tên từ hình ảnh tham khảo. "
+        "Tuyệt đối bắt buộc phải sao chép y hệt và giữ đúng 100% chi tiết biển tên, quân hàm, logo và trang phục từ hình ảnh tham khảo. "
         "Tuyệt đối lấy khuôn mặt, biểu cảm, cơ thể, vóc dáng và tư thế từ ảnh gốc do người dùng cung cấp, không được phép thay đổi. "
         "Chỉ thay đổi quần áo thành đồng phục chiến thuật chuẩn của Cảnh sát Cơ động Việt Nam"
         "đồng phục chiến thuật màu xanh đen đậm với túi ngực, bảng tên ở ngực phải và cấp hiệu đeo vai màu đỏ. "
@@ -25,7 +25,7 @@ PROMPTS = {
     "canh_sat_dac_nhiem": (
         "Hình ảnh quần áo chính là đồng phục Cảnh Sát Đặc Nhiệm Việt Nam"
         "Ảnh chụp RAW DSLR siêu thực, độ phân giải 4K, ánh sáng tự nhiên."
-        "Bắt buộc sao chép y hệt 100% quần áo, trang phục, quân hàm, biển tên từ hình ảnh tham khảo. "
+        "Tuyệt đối bắt buộc phải sao chép y hệt và giữ đúng 100% chi tiết biển tên, quân hàm, logo và trang phục từ hình ảnh tham khảo. "
         "Tuyệt đối lấy khuôn mặt, biểu cảm, cơ thể, vóc dáng và tư thế từ ảnh gốc do người dùng cung cấp, không được phép thay đổi. "
         "Chỉ thay đổi quần áo thành đồng phục chiến thuật chuẩn của Cảnh sát Đặc nhiệm Việt Nam"
         "đồng phục chiến thuật màu xám đậm với túi ngực, bảng tên ở ngực phải và cấp hiệu đeo vai màu đỏ. "
@@ -35,7 +35,7 @@ PROMPTS = {
     "canh_sat_giao_thong": (
         "Hình ảnh quần áo chính là đồng phục Cảnh sát Giao thông Việt Nam."
         "Ảnh chụp RAW DSLR siêu thực, độ phân giải 4K, ánh sáng tự nhiên. "
-        "Bắt buộc sao chép y hệt 100% quần áo, trang phục, quân hàm, biển tên từ hình ảnh tham khảo. "
+        "Tuyệt đối bắt buộc phải sao chép y hệt và giữ đúng 100% chi tiết biển tên, quân hàm, logo và trang phục từ hình ảnh tham khảo. "
         "Tuyệt đối lấy khuôn mặt, biểu cảm, cơ thể, vóc dáng và tư thế từ ảnh gốc do người dùng cung cấp, không được phép thay đổi. "
         "Chỉ thay đổi quần áo thành đồng phục chuẩn của Cảnh sát Giao thông Việt Nam"
         "áo màu vàng lúa chín đặc trưng với túi ngực, bảng tên/phù hiệu gắn trên ngực phải, tên hiển thị DREAM chữ in hoa không dấu, số hiệu là 123-456."
@@ -57,7 +57,7 @@ PROMPTS = {
     "canh_sat_pccc": (
         "Hình ảnh quần áo chính là đồng phục Cảnh Sát Phòng Cháy Chữa Cháy Việt Nam"
         "Ảnh chụp RAW DSLR siêu thực, độ phân giải 4K, ánh sáng tự nhiên."
-        "Bắt buộc sao chép y hệt 100% quần áo, trang phục, quân hàm, biển tên từ hình ảnh tham khảo. "
+        "Tuyệt đối bắt buộc phải sao chép y hệt và giữ đúng 100% chi tiết biển tên, quân hàm, logo và trang phục từ hình ảnh tham khảo. "
         "Tuyệt đối lấy khuôn mặt, biểu cảm, cơ thể, vóc dáng và tư thế từ ảnh gốc do người dùng cung cấp, không được phép thay đổi. "
         "Chỉ thay đổi quần áo thành đồng phục chuẩn của Cảnh sát PCCC Việt Nam"
         "bộ đồ bảo hộ màu đỏ có sọc phản quang màu vàng chanh, có logo bên tay trái. "
@@ -66,7 +66,7 @@ PROMPTS = {
     ),
     "doctor": (
         "Ảnh chụp RAW DSLR siêu thực, độ phân giải 8K, ánh sáng tự nhiên. "
-        "Bắt buộc sao chép y hệt 100% quần áo, trang phục từ hình ảnh tham khảo. "
+        "Tuyệt đối bắt buộc phải sao chép y hệt và giữ đúng 100% chi tiết biển tên, logo và trang phục từ hình ảnh tham khảo. "
         "Tuyệt đối lấy khuôn mặt, biểu cảm, cơ thể, vóc dáng và tư thế từ ảnh gốc do người dùng cung cấp, không được phép thay đổi. "
         "Chỉ thay đổi quần áo thành áo blouse trắng của bác sĩ. "
         "Thêm ống nghe y tế đeo quanh cổ. "
@@ -74,7 +74,7 @@ PROMPTS = {
     ),
     "teacher": (
         "Ảnh chụp RAW DSLR siêu thực, độ phân giải 8K, ánh sáng tự nhiên. "
-        "Bắt buộc sao chép y hệt 100% quần áo, trang phục từ hình ảnh tham khảo. "
+        "Tuyệt đối bắt buộc phải sao chép y hệt và giữ đúng 100% chi tiết biển tên, logo và trang phục từ hình ảnh tham khảo. "
         "Tuyệt đối lấy khuôn mặt, biểu cảm, cơ thể, vóc dáng và tư thế từ ảnh gốc do người dùng cung cấp, không được phép thay đổi. "
         "Chỉ thay đổi quần áo thành trang phục giảng viên chuyên nghiệp. "
         "Cầm một cây bút lông hoặc que chỉ bảng một cách tự nhiên. "
@@ -82,7 +82,7 @@ PROMPTS = {
     ),
     "singer": (
         "Ảnh chụp RAW DSLR siêu thực, độ phân giải 8K, ánh sáng tự nhiên. "
-        "Bắt buộc sao chép y hệt 100% quần áo, trang phục từ hình ảnh tham khảo. "
+        "Tuyệt đối bắt buộc phải sao chép y hệt và giữ đúng 100% chi tiết biển tên, logo và trang phục từ hình ảnh tham khảo. "
         "Tuyệt đối lấy khuôn mặt, biểu cảm, cơ thể, vóc dáng và tư thế từ ảnh gốc do người dùng cung cấp, không được phép thay đổi. "
         "Chỉ thay đổi quần áo thành một trang phục biểu diễn sân khấu thanh lịch. "
         "Cầm một chiếc micro trên tay một cách tự nhiên. "
@@ -90,7 +90,7 @@ PROMPTS = {
     ),
     "pilot": (
         "Ảnh chụp RAW DSLR siêu thực, độ phân giải 8K, ánh sáng tự nhiên. "
-        "Bắt buộc sao chép y hệt 100% quần áo, trang phục từ hình ảnh tham khảo. "
+        "Tuyệt đối bắt buộc phải sao chép y hệt và giữ đúng 100% chi tiết biển tên, logo và trang phục từ hình ảnh tham khảo. "
         "Tuyệt đối lấy khuôn mặt, biểu cảm, cơ thể, vóc dáng và tư thế từ ảnh gốc do người dùng cung cấp, không được phép thay đổi. "
         "Chỉ thay đổi quần áo thành đồng phục phi công hàng không thương mại có cầu vai và cà vạt. "
         "Thêm một chiếc mũ phi công, huy hiệu cánh chim cơ trưởng, và một chiếc túi bay. "
@@ -98,7 +98,7 @@ PROMPTS = {
     ),
     "chef": (
         "Ảnh chụp RAW DSLR siêu thực, độ phân giải 8K, ánh sáng tự nhiên. "
-        "Bắt buộc sao chép y hệt 100% quần áo, trang phục từ hình ảnh tham khảo. "
+        "Tuyệt đối bắt buộc phải sao chép y hệt và giữ đúng 100% chi tiết biển tên, logo và trang phục từ hình ảnh tham khảo. "
         "Tuyệt đối lấy khuôn mặt, biểu cảm, cơ thể, vóc dáng và tư thế từ ảnh gốc do người dùng cung cấp, không được phép thay đổi. "
         "Chỉ thay đổi quần áo thành đồng phục đầu bếp màu trắng chuyên nghiệp có tạp dề. "
         "Thêm một chiếc mũ đầu bếp cao và cầm một chiếc thìa xào bằng thép không gỉ một cách tự nhiên. "
@@ -106,7 +106,7 @@ PROMPTS = {
     ),
     "engineer": (
         "Ảnh chụp RAW DSLR siêu thực, độ phân giải 8K, ánh sáng tự nhiên. "
-        "Bắt buộc sao chép y hệt 100% quần áo, trang phục từ hình ảnh tham khảo. "
+        "Tuyệt đối bắt buộc phải sao chép y hệt và giữ đúng 100% chi tiết biển tên, logo và trang phục từ hình ảnh tham khảo. "
         "Tuyệt đối lấy khuôn mặt, biểu cảm, cơ thể, vóc dáng và tư thế từ ảnh gốc do người dùng cung cấp, không được phép thay đổi. "
         "Chỉ thay đổi quần áo thành trang phục kỹ sư chuyên nghiệp có áo khoác bảo hộ phản quang. "
         "Thêm một chiếc mũ bảo hộ màu trắng và cầm các bản vẽ thiết kế xây dựng cuộn tròn một cách tự nhiên. "
@@ -120,6 +120,7 @@ NEGATIVE_PROMPT = (
     "thừa người, thiếu người, nhân bản người, người bị sao chép, "
     "cấu trúc cơ thể sai, tay xấu, ngón tay biến dạng, tứ chi dị dạng, "
     "mờ, chất lượng thấp, độ phân giải thấp, ảnh bị nhiễu hạt, dư sáng, thiếu sáng, "
-    "chữ, hình mờ, logo, chữ ký, "
-    "hình minh họa, tranh vẽ, hoạt hình, anime, CGI, kết xuất 3D, da giống nhựa"
+    "hình mờ, watermark, chữ ký, "
+    "hình minh họa, tranh vẽ, hoạt hình, anime, CGI, kết xuất 3D, da giống nhựa, "
+    "biển tên mờ, quân hàm sai, logo sai, mất chi tiết biển tên, mất chi tiết quân hàm, mất logo"
 )
