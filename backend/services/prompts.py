@@ -45,8 +45,9 @@ PROMPTS = {
     "canh_sat_nhan_dan": (
         "Hình ảnh quần áo chính là đồng phục Cảnh sát Nhân dân Việt Nam."
         "Ảnh chụp RAW DSLR siêu thực, độ phân giải 4K, ánh sáng tự nhiên. "
-        "Bắt buộc sao chép y hệt 100% quần áo, trang phục, quân hàm, biển tên từ hình ảnh tham khảo. "
+        "Bắt buộc sao chép y hệt 100% quần áo, trang phục, quân hàm, biển tên từ hình ảnh tham khảo."
         "Tuyệt đối lấy khuôn mặt, biểu cảm, cơ thể, vóc dáng và tư thế từ ảnh gốc do người dùng cung cấp, không được phép thay đổi."
+        "Tuyệt đối không lấy khuôn mặt trong ảnh mẫu cung cấp"
         "Chỉ thay đổi quần áo thành đồng phục chuẩn của Cảnh sát Nhân dân Việt Nam"
         "Quân hàm nền đỏ họa tiết vàng, thiếu úy 1 sao và bắt buộc phải có 1 gạch kéo dài từ trên xuống dưới ở chính giữa dọc theo quân hàm."
         "Áo màu xanh mạ non với túi ngực, bảng tên/phù hiệu gắn trên ngực phải, tên hiển thị DREAM chữ in hoa không dấu, số hiệu là 123-456."

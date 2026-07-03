@@ -132,7 +132,7 @@ def change_clothes_gemini(image_bytes: bytes, profession: str) -> str:
         # Using low temperature for strict adherence
         response = model.generate_content(
             content_payload,
-            generation_config=genai.types.GenerationConfig(temperature=0.2, top_k=1, top_p=0.1)
+            generation_config=genai.types.GenerationConfig(temperature=0.0, top_k=1, top_p=0.1)
         )
 
         for part in response.candidates[0].content.parts:
