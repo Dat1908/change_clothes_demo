@@ -177,14 +177,12 @@ async function checkHealth() {
 			signal: AbortSignal.timeout(5000),
 		});
 		const data = await res.json();
-		if (data.status === "ok") {
+		if (data.gemini_key_count > 0) {
 			statusDot.className = "status-dot online";
-			headerStatus.title = "API sẵn sàng";
-		} else if (data.status === "degraded") {
-			statusDot.className = "status-dot warning";
-			headerStatus.title = "API khởi động (thiếu key)";
+			headerStatus.title = `API sẵn sàng (${data.gemini_key_count} Gemini key)`;
 		} else {
-			throw new Error("Bad status");
+			statusDot.className = "status-dot warning";
+			headerStatus.title = "Không có Gemini key nào được cấu hình";
 		}
 	} catch {
 		statusDot.className = "status-dot offline";

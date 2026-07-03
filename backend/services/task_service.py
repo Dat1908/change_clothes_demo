@@ -2,7 +2,7 @@ import logging
 import uuid
 from typing import Dict, Any
 
-from config import OPENAI_API_KEY, GEMINI_API_KEY
+from config import OPENAI_API_KEY, GEMINI_API_KEYS
 from services.openai_service import change_clothes_openai
 from services.gemini_service import change_clothes_gemini
 
@@ -35,8 +35,8 @@ def run_clothing_transformation(
                 raise ValueError("OpenAI API key not configured.")
             result_b64 = change_clothes_openai(image_bytes, profession)
         else:
-            if not GEMINI_API_KEY:
-                raise ValueError("Gemini API key not configured.")
+            if not GEMINI_API_KEYS:
+                raise ValueError("No Gemini API key configured.")
             result_b64 = change_clothes_gemini(image_bytes, profession)
 
         # Update task on success

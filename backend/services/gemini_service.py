@@ -1,12 +1,22 @@
 import base64
 import io
 import logging
+import threading
 import google.generativeai as genai
 from PIL import Image
-from config import GEMINI_API_KEY, GEMINI_API_KEY_2, GEMINI_MODEL_NAME
+from config import GEMINI_API_KEYS, GEMINI_MODEL_NAME
 from services.prompts import PROMPTS, NEGATIVE_PROMPT
 
 logger = logging.getLogger(__name__)
+
+# Index into GEMINI_API_KEYS of the key that last succeeded — future requests
+# start there first instead of always retrying from key #1, so a key that's
+# known to be rate-limited isn't hit again on every single request.
+_last_good_key_index = 0
+# Names of keys currently claimed by an in-flight request, so concurrent
+# requests spread across different keys instead of racing onto the same one.
+_keys_in_use = set()
+_key_index_lock = threading.Lock()
 
 
 def change_clothes_gemini(image_bytes: bytes, profession: str) -> str:
@@ -42,7 +52,8 @@ def change_clothes_gemini(image_bytes: bytes, profession: str) -> str:
     sample_path = None
     badge_path = None
     name_tag_path = None
-    
+    logo_path = None
+
     if profession in POLICE_PROFESSIONS:
         prof_dir = os.path.join(sample_dir, profession)
         
@@ -127,22 +138,53 @@ def change_clothes_gemini(image_bytes: bytes, profession: str) -> str:
         for part in response.candidates[0].content.parts:
             if part.inline_data and "image" in part.inline_data.mime_type:
                 return base64.b64encode(part.inline_data.data).decode("utf-8")
-        
+
         raise RuntimeError("Gemini did not return an image in the response.")
 
-    try:
-        result = attempt_gemini(GEMINI_API_KEY)
-        logger.info(f"[Gemini] Successfully generated image for profession={profession} using primary key")
-        return result
-    except Exception as e:
-        logger.warning(f"[Gemini] Primary key failed: {e}. Falling back to GEMINI_API_KEY_2")
-        if not GEMINI_API_KEY_2:
-            raise e
-        
+    if not GEMINI_API_KEYS:
+        raise ValueError("No Gemini API key configured.")
+
+    global _last_good_key_index
+
+    def claim_next_key(offset: int):
+        """Pick the next candidate key, preferring the last-known-good one
+        and skipping any key another concurrent request already has claimed
+        (unless every key is already in use, in which case reuse is forced)."""
+        with _key_index_lock:
+            start_index = _last_good_key_index if _last_good_key_index < len(GEMINI_API_KEYS) else 0
+            all_in_use = len(_keys_in_use) >= len(GEMINI_API_KEYS)
+            for i in range(len(GEMINI_API_KEYS)):
+                key_index = (start_index + offset + i) % len(GEMINI_API_KEYS)
+                key_name, api_key = GEMINI_API_KEYS[key_index]
+                if all_in_use or key_name not in _keys_in_use:
+                    _keys_in_use.add(key_name)
+                    return key_index, key_name, api_key
+            # Shouldn't happen, but fall back to the first key just in case.
+            key_index = start_index
+            key_name, api_key = GEMINI_API_KEYS[key_index]
+            return key_index, key_name, api_key
+
+    # Try keys starting from the last one known to work, wrapping around the
+    # pool, so a key that's currently rate-limited isn't retried first on
+    # every subsequent request — the next free key gets priority instead.
+    # Keys already claimed by another in-flight (concurrent) request are
+    # skipped so parallel requests spread across different keys.
+    last_error = None
+    for offset in range(len(GEMINI_API_KEYS)):
+        key_index, key_name, api_key = claim_next_key(offset)
+        logger.info(f"[Gemini] Calling Gemini for profession={profession} using {key_name}")
         try:
-            result = attempt_gemini(GEMINI_API_KEY_2)
-            logger.info(f"[Gemini] Successfully generated image for profession={profession} using fallback key")
+            result = attempt_gemini(api_key)
+            with _key_index_lock:
+                _last_good_key_index = key_index
+            logger.info(f"[Gemini] Successfully generated image for profession={profession} using {key_name}")
             return result
-        except Exception as fallback_e:
-            logger.error(f"[Gemini] Fallback key also failed: {fallback_e}")
-            raise fallback_e
+        except Exception as e:
+            logger.warning(f"[Gemini] {key_name} failed: {e}")
+            last_error = e
+        finally:
+            with _key_index_lock:
+                _keys_in_use.discard(key_name)
+
+    logger.error(f"[Gemini] All {len(GEMINI_API_KEYS)} key(s) failed.")
+    raise last_error

@@ -12,7 +12,7 @@ from fastapi.staticfiles import StaticFiles
 # Add backend dir to path so imports work
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from config import validate_config
+from config import validate_config, GEMINI_API_KEYS, OPENAI_API_KEY
 from api.router import router as api_router
 
 # ─── Logging ────────────────────────────────────────────────────────────────
@@ -56,6 +56,10 @@ if __name__ == "__main__":
     config_errors = validate_config()
     if config_errors:
         logger.warning(f"Config warnings: {config_errors}")
+
+    gemini_key_names = ", ".join(name for name, _ in GEMINI_API_KEYS) or "none"
+    logger.info(f"🔑 Gemini keys found: {len(GEMINI_API_KEYS)} ({gemini_key_names})")
+    logger.info(f"🔑 OpenAI key configured: {bool(OPENAI_API_KEY)}")
 
     logger.info(f"🌐 Mở Web-app tại: http://127.0.0.1:{PORT}/app")
 

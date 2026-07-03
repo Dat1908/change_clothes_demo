@@ -2,7 +2,7 @@ import logging
 from fastapi import APIRouter, File, Form, UploadFile, HTTPException, BackgroundTasks
 from fastapi.responses import JSONResponse
 
-from config import validate_config, OPENAI_API_KEY, GEMINI_API_KEY, GPT_MODEL_NAME, GEMINI_MODEL_NAME
+from config import validate_config, OPENAI_API_KEY, GEMINI_API_KEYS, GPT_MODEL_NAME, GEMINI_MODEL_NAME
 from services.task_service import create_task, get_task_status, run_clothing_transformation
 from services.prompts import PROMPTS
 
@@ -14,15 +14,16 @@ async def health_check():
     """Health check endpoint."""
     errors = validate_config()
     # At least one AI provider key is enough to serve requests; only degrade
-    # when neither key is configured (both providers unusable).
-    has_any_key = bool(OPENAI_API_KEY) or bool(GEMINI_API_KEY)
+    # when neither provider has any key configured (both unusable).
+    has_any_key = bool(OPENAI_API_KEY) or bool(GEMINI_API_KEYS)
     return {
         "status": "ok" if has_any_key else "degraded",
         "config_errors": errors,
         "openai_model": GPT_MODEL_NAME,
         "gemini_model": GEMINI_MODEL_NAME,
         "openai_key_set": bool(OPENAI_API_KEY),
-        "gemini_key_set": bool(GEMINI_API_KEY),
+        "gemini_key_set": bool(GEMINI_API_KEYS),
+        "gemini_key_count": len(GEMINI_API_KEYS),
     }
 
 @router.get("/api/professions")
