@@ -53,6 +53,7 @@ def change_clothes_gemini(image_bytes: bytes, profession: str) -> str:
     badge_path = None
     name_tag_path = None
     logo_path = None
+    logo_co_ao_path = None
 
     if profession in POLICE_PROFESSIONS:
         prof_dir = os.path.join(sample_dir, profession)
@@ -76,6 +77,11 @@ def change_clothes_gemini(image_bytes: bytes, profession: str) -> str:
         lg_jpg = os.path.join(prof_dir, "logo.jpg")
         lg_png = os.path.join(prof_dir, "logo.png")
         logo_path = lg_jpg if os.path.exists(lg_jpg) else (lg_png if os.path.exists(lg_png) else None)
+
+        # Check for logo_co_ao reference
+        lca_jpg = os.path.join(prof_dir, "logo_co_ao.jpg")
+        lca_png = os.path.join(prof_dir, "logo_co_ao.png")
+        logo_co_ao_path = lca_jpg if os.path.exists(lca_jpg) else (lca_png if os.path.exists(lca_png) else None)
     else:
         # Fallback for non-police professions
         sample_path_jpg = os.path.join(sample_dir, f"{profession}.jpg")
@@ -108,6 +114,12 @@ def change_clothes_gemini(image_bytes: bytes, profession: str) -> str:
         logo_image = Image.open(logo_path).convert("RGB")
         images_to_pass.append(logo_image)
         prompt_additions.append(f"{img_idx}. Hình ảnh #{img_idx} là ẢNH THAM KHẢO LOGO/HUY HIỆU. Bắt buộc gắn chính xác logo này lên CÁNH TAY TRÁI của trang phục. Đây là nguồn tuyệt đối cho thiết kế logo cánh tay.")
+        img_idx += 1
+        
+    if logo_co_ao_path:
+        logo_co_ao_image = Image.open(logo_co_ao_path).convert("RGB")
+        images_to_pass.append(logo_co_ao_image)
+        prompt_additions.append(f"{img_idx}. Hình ảnh #{img_idx} là ẢNH THAM KHẢO LOGO CỔ ÁO. Bắt buộc gắn chính xác thiết kế logo này lên CẢ 2 BÊN CỔ ÁO của trang phục. Đây là nguồn tuyệt đối cho thiết kế logo ở cổ áo.")
         img_idx += 1
         
     target_idx = img_idx
