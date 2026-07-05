@@ -59,7 +59,7 @@ PROMPTS = {
         "Tuyệt đối bắt buộc phải sao chép y hệt và giữ đúng 100% chi tiết biển tên, quân hàm, logo và trang phục từ hình ảnh tham khảo. "
         "Tuyệt đối giữ nguyên bản 100% khuôn mặt, danh tính, biểu cảm, cơ thể, vóc dáng và tư thế từ ảnh gốc của người dùng. Nghiêm cấm làm thay đổi khuôn mặt, tuyệt đối không lấy khuôn mặt từ ảnh tham khảo trang phục. "
         "Chỉ thay đổi quần áo thành đồng phục chuẩn của Cảnh sát PCCC Việt Nam"
-        "bộ đồ bảo hộ màu đỏ có sọc phản quang màu vàng chanh, có logo bên tay trái. "
+        "bộ đồ bảo hộ màu xanh đen có sọc phản quang màu vàng chanh, có logo bên tay trái. "
         "đội mũ bảo hiểm của lính cứu hỏa màu đỏ, không có logo ở mũ và áo."
         "Bối cảnh: ngoài trời"
     ),

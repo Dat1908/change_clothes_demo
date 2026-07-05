@@ -136,6 +136,7 @@ async def create_change_clothes_task(
     background_tasks: BackgroundTasks,
     image: UploadFile = File(..., description="Input person image (JPG/PNG)"),
     profession: str = Form(..., description="Profession: an_ninh_nhan_dan | canh_sat_nhan_dan | canh_sat_giao_thong | canh_sat_co_dong | canh_sat_dac_nhiem | canh_sat_pccc | doctor | teacher | singer | pilot | chef | engineer"),
+    gender: str = Form(default="nam", description="Gender for sample images: nam | nu"),
     ai_provider: str = Form(default="openai", description="AI provider: openai | gemini"),
 ):
     """
@@ -143,9 +144,11 @@ async def create_change_clothes_task(
     """
     allowed_professions = set(PROMPTS.keys())
     allowed_providers = {"openai", "gemini"}
+    allowed_genders = {"nam", "nu"}
 
     profession = profession.lower().strip()
     ai_provider = ai_provider.lower().strip()
+    gender = gender.lower().strip()
 
     if profession not in allowed_professions:
         raise HTTPException(
@@ -156,6 +159,11 @@ async def create_change_clothes_task(
         raise HTTPException(
             status_code=400,
             detail=f"Invalid ai_provider '{ai_provider}'. Choose from: {sorted(allowed_providers)}",
+        )
+    if gender not in allowed_genders:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid gender '{gender}'. Choose from: nam, nu",
         )
 
     if not image.content_type or not image.content_type.startswith("image/"):
@@ -170,7 +178,7 @@ async def create_change_clothes_task(
         raise HTTPException(status_code=400, detail=f"Image too large. Maximum size: {max_size_mb}MB")
 
     logger.info(
-        f"Creating task for: profession={profession}, provider={ai_provider}, "
+        f"Creating task for: profession={profession}, gender={gender}, provider={ai_provider}, "
         f"image_size={len(image_bytes)/1024:.1f}KB, filename={image.filename}"
     )
 
@@ -182,7 +190,8 @@ async def create_change_clothes_task(
         task_id=task_id,
         image_bytes=image_bytes,
         profession=profession,
-        ai_provider=ai_provider
+        ai_provider=ai_provider,
+        gender=gender,
     )
 
     return JSONResponse(

@@ -19,7 +19,7 @@ _keys_in_use = set()
 _key_index_lock = threading.Lock()
 
 
-def change_clothes_gemini(image_bytes: bytes, profession: str) -> str:
+def change_clothes_gemini(image_bytes: bytes, profession: str, gender: str = "nam") -> str:
     """
     Use Google Gemini API to change clothing in the image.
     Returns base64-encoded result image.
@@ -48,6 +48,9 @@ def change_clothes_gemini(image_bytes: bytes, profession: str) -> str:
         "an_ninh_nhan_dan", "canh_sat_nhan_dan", "canh_sat_giao_thong", 
         "canh_sat_co_dong", "canh_sat_dac_nhiem", "canh_sat_pccc"
     ]
+
+    # Normalise gender — accept "nam"/"nu" only, default to "nam"
+    gender_folder = "nu" if gender.lower().strip() == "nu" else "nam"
     
     sample_path = None
     badge_path = None
@@ -56,7 +59,14 @@ def change_clothes_gemini(image_bytes: bytes, profession: str) -> str:
     logo_co_ao_path = None
 
     if profession in POLICE_PROFESSIONS:
-        prof_dir = os.path.join(sample_dir, profession)
+        prof_dir = os.path.join(sample_dir, gender_folder, profession)
+        # Fallback to the gender-agnostic top-level folder if the gendered one
+        # doesn't exist yet (e.g. only "nam" is populated so far).
+        if not os.path.isdir(prof_dir):
+            fallback_dir = os.path.join(sample_dir, profession)
+            if os.path.isdir(fallback_dir):
+                logger.warning(f"[Gemini] Gendered folder '{prof_dir}' not found, falling back to '{fallback_dir}'")
+                prof_dir = fallback_dir
         
         # Check for main clothing reference
         tp_jpg = os.path.join(prof_dir, "trang_phuc.jpg")

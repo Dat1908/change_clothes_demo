@@ -23,7 +23,7 @@ def get_task_status(task_id: str) -> Dict[str, Any]:
     return TASKS.get(task_id)
 
 def run_clothing_transformation(
-    task_id: str, image_bytes: bytes, profession: str, ai_provider: str
+    task_id: str, image_bytes: bytes, profession: str, ai_provider: str, gender: str = "nam"
 ):
     """
     Background worker function that performs the AI transformation
@@ -37,7 +37,7 @@ def run_clothing_transformation(
         else:
             if not GEMINI_API_KEYS:
                 raise ValueError("No Gemini API key configured.")
-            result_b64 = change_clothes_gemini(image_bytes, profession)
+            result_b64 = change_clothes_gemini(image_bytes, profession, gender=gender)
 
         # Update task on success
         TASKS[task_id]["status"] = "completed"
