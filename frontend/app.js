@@ -10,6 +10,7 @@ const state = {
 	imageDataUrl: null,
 	selectedProfession: null,
 	selectedProvider: "openai",
+	selectedGender: "nam",
 	isLoading: false,
 	resultB64: null,
 };
@@ -30,6 +31,7 @@ const sourceBodies = {
 
 const professionBtns = document.querySelectorAll(".profession-btn");
 const providerBtns = document.querySelectorAll(".provider-btn");
+const genderBtns = document.querySelectorAll(".gender-btn");
 
 const professionPicker = document.getElementById("professionPicker");
 const professionSlotEmpty = document.getElementById("professionSlotEmpty");
@@ -653,6 +655,19 @@ removeSlotBtn.addEventListener("click", () => {
 	clearProfessionSlot();
 });
 
+// ── Gender Selection ──────────────────────────────────────────────────────
+genderBtns.forEach((btn) => {
+	btn.addEventListener("click", () => {
+		state.selectedGender = btn.dataset.gender;
+		genderBtns.forEach((b) => {
+			b.classList.remove("active");
+			b.setAttribute("aria-pressed", "false");
+		});
+		btn.classList.add("active");
+		btn.setAttribute("aria-pressed", "true");
+	});
+});
+
 // ── Provider Selection ────────────────────────────────────────────────────
 providerBtns.forEach((btn) => {
 	btn.addEventListener("click", () => {
@@ -725,6 +740,7 @@ transformBtn.addEventListener("click", async () => {
 			const formData = new FormData();
 			formData.append("image", state.imageFile);
 			formData.append("profession", transformingProfession);
+			formData.append("gender", state.selectedGender);
 			formData.append("ai_provider", provider);
 
 			// 1. Submit task
