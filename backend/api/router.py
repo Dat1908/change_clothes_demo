@@ -4,7 +4,9 @@ from fastapi.responses import JSONResponse
 
 from config import validate_config, OPENAI_API_KEY, GEMINI_API_KEYS, GPT_MODEL_NAME, GEMINI_MODEL_NAME
 from services.task_service import create_task, get_task_status, run_clothing_transformation
-from services.prompts import PROMPTS
+from services.prompts import PROMPTS_NAM
+from services.classifier_service import detect_gender
+from services.classifier_service import detect_gender
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -25,6 +27,21 @@ async def health_check():
         "gemini_key_set": bool(GEMINI_API_KEYS),
         "gemini_key_count": len(GEMINI_API_KEYS),
     }
+
+@router.post("/api/detect-gender")
+async def api_detect_gender(image: UploadFile = File(...)):
+    """
+    Detect the gender of the person in the uploaded image.
+    Returns: {"gender": "nam" | "nu"}
+    """
+    try:
+        image_bytes = await image.read()
+        gender = detect_gender(image_bytes)
+        return {"gender": gender}
+    except Exception as e:
+        logger.error(f"Error in detect_gender API: {e}")
+        return {"gender": "nam"} # Default fallback
+
 
 @router.get("/api/professions")
 async def get_professions():
@@ -142,7 +159,7 @@ async def create_change_clothes_task(
     """
     Submit a task to transform clothing. Returns a task_id immediately.
     """
-    allowed_professions = set(PROMPTS.keys())
+    allowed_professions = set(PROMPTS_NAM.keys())
     allowed_providers = {"openai", "gemini"}
     allowed_genders = {"nam", "nu"}
 

@@ -239,6 +239,49 @@ function freezeImage() {
 	Object.values(sourceBodies).forEach((el) => el.classList.add("hidden"));
 	frozenImgWrap.classList.remove("hidden");
 	sourceSubtitle.textContent = "Sẵn sàng để biến đổi";
+	
+	// Auto detect gender
+	autoDetectGender();
+}
+
+async function autoDetectGender() {
+	if (!state.imageFile) return;
+	
+	const genderSelector = document.getElementById("genderSelector");
+	genderSelector.classList.add("is-detecting");
+	
+	const controller = new AbortController();
+	const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+	
+	try {
+		const formData = new FormData();
+		formData.append("image", state.imageFile);
+		
+		const res = await fetch("/api/detect-gender", {
+			method: "POST",
+			body: formData,
+			signal: controller.signal
+		});
+		
+		if (!res.ok) throw new Error("API failed");
+		
+		const data = await res.json();
+		const gender = data.gender || "nam";
+		
+		// Click the correct gender button
+		const btnToClick = document.querySelector(`.gender-btn[data-gender="${gender}"]`);
+		if (btnToClick) btnToClick.click();
+		
+	} catch (err) {
+		console.warn("Auto-detect gender failed or timed out:", err);
+		// Default to nam on error/timeout
+		const btnNam = document.getElementById("genderBtnNam");
+		if (btnNam) btnNam.click();
+	} finally {
+		clearTimeout(timeoutId);
+		genderSelector.classList.remove("is-detecting");
+		genderSelector.classList.remove("is-disabled");
+	}
 }
 
 function unfreezeImage() {
@@ -644,9 +687,11 @@ function clearProfessionSlot() {
 	professionSlotEmpty.classList.remove("hidden");
 	professionPicker.classList.remove("hidden");
 
-	// If a previous result existed, it no longer matches — reset back to the
-	// placeholder, and swap the transform button back from the time badge
-	// to "Biến Đổi Ngay" so the next run starts fresh.
+	resetResultState();
+	updateTransformBtn();
+}
+
+function resetResultState() {
 	if (state.resultB64) {
 		state.resultB64 = null;
 		resultImgWrap.classList.add("hidden");
@@ -656,9 +701,8 @@ function clearProfessionSlot() {
 		transformContent.classList.remove("hidden");
 		transformBtn.classList.remove("is-done");
 	}
-
-	updateTransformBtn();
 }
+
 
 professionBtns.forEach((btn) => {
 	btn.addEventListener("click", () => {

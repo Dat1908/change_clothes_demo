@@ -3,22 +3,23 @@ import io
 import logging
 from openai import OpenAI
 from config import OPENAI_API_KEY, GPT_MODEL_NAME
-from services.prompts import PROMPTS, NEGATIVE_PROMPT
+from services.prompts import PROMPTS_NAM, PROMPTS_NU, NEGATIVE_PROMPT
 
 logger = logging.getLogger(__name__)
 
 
-def change_clothes_openai(image_bytes: bytes, profession: str) -> str:
+def change_clothes_openai(image_bytes: bytes, profession: str, gender: str = "nam") -> str:
     """
     Use OpenAI GPT-Image API to change clothing in the image.
     Returns base64-encoded result image.
     """
     client = OpenAI(api_key=OPENAI_API_KEY)
     profession = profession.lower()
-    if profession not in PROMPTS:
-        raise ValueError(f"Unknown profession: {profession}. Choose from: {list(PROMPTS.keys())}")
+    prompts_dict = PROMPTS_NU if gender.lower().strip() == "nu" else PROMPTS_NAM
+    if profession not in prompts_dict:
+        raise ValueError(f"Unknown profession: {profession}. Choose from: {list(prompts_dict.keys())}")
 
-    prompt = PROMPTS[profession]
+    prompt = prompts_dict[profession]
     full_prompt = f"{prompt}\n\nAvoid: {NEGATIVE_PROMPT}"
 
     logger.info(f"[OpenAI] Calling {GPT_MODEL_NAME} for profession={profession}")
