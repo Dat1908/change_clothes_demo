@@ -68,7 +68,7 @@
             </div>
           </div>
 
-          <!-- Source Tabs -->
+          <!-- Source Tabs + Gender Selector -->
           <div class="source-tabs" id="sourceTabs" role="tablist" aria-label="Loại nguồn ảnh">
             <button class="source-tab active" id="tab-upload" data-source="upload" role="tab" aria-selected="true">
               <span class="tab-icon">🖼️</span><span>Tải ảnh</span>
@@ -76,6 +76,16 @@
             <button class="source-tab" id="tab-camera" data-source="camera" role="tab" aria-selected="false">
               <span class="tab-icon">📸</span><span>Chụp ảnh</span>
             </button>
+            <div class="gender-selector is-disabled" id="genderSelector" role="group" aria-label="Chọn giới tính">
+              <button class="gender-btn" id="genderBtnNam" data-gender="nam" aria-pressed="false" aria-label="Nam"
+                disabled>
+                <span>Nam</span>
+              </button>
+              <button class="gender-btn" id="genderBtnNu" data-gender="nu" aria-pressed="false" aria-label="Nữ"
+                disabled>
+                <span>Nữ</span>
+              </button>
+            </div>
           </div>
 
           <!-- Upload Panel -->
@@ -136,19 +146,6 @@
             </div>
           </div>
 
-          <!-- Gender Selector -->
-          <div class="gender-selector" id="genderSelector" role="group" aria-label="Chọn giới tính">
-            <span class="gender-selector-label">Giới tính:</span>
-            <button class="gender-btn active" id="genderBtnNam" data-gender="nam" aria-pressed="true">
-              <span class="gender-btn-icon"></span>
-              <span>Nam</span>
-            </button>
-            <button class="gender-btn" id="genderBtnNu" data-gender="nu" aria-pressed="false">
-              <span class="gender-btn-icon"></span>
-              <span>Nữ</span>
-            </button>
-          </div>
-
           <!-- Profession slot + Transform button -->
           <div class="profession-slot-row">
             <div class="profession-slot" id="professionSlot">
@@ -172,12 +169,6 @@
               <span class="result-time-badge hidden" id="resultTimeBadge"></span>
               <div class="btn-shimmer"></div>
             </button>
-          </div>
-
-          <!-- Error -->
-          <div class="error-box hidden" id="errorBox" role="alert" aria-live="assertive">
-            <span class="error-icon">⚠️</span>
-            <p class="error-message" id="errorMessage">Đã có lỗi xảy ra.</p>
           </div>
 
           <!-- Profession Picker (hidden after transform succeeds) -->

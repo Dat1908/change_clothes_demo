@@ -3,6 +3,7 @@
    ══════════════════════════════════════════════════════════════════════ */
 
 const API_BASE = "";
+let isOpenAiKeySet = false;
 
 // ── State ─────────────────────────────────────────────────────────────────
 const state = {
@@ -32,6 +33,7 @@ const sourceBodies = {
 const professionBtns = document.querySelectorAll(".profession-btn");
 const providerBtns = document.querySelectorAll(".provider-btn");
 const genderBtns = document.querySelectorAll(".gender-btn");
+const genderSelector = document.getElementById("genderSelector");
 
 const professionPicker = document.getElementById("professionPicker");
 const professionSlotEmpty = document.getElementById("professionSlotEmpty");
@@ -43,9 +45,6 @@ const removeSlotBtn = document.getElementById("removeSlotBtn");
 
 const transformBtn = document.getElementById("transformBtn");
 const transformContent = document.getElementById("transformBtnContent");
-
-const errorBox = document.getElementById("errorBox");
-const errorMessage = document.getElementById("errorMessage");
 
 const resultPlaceholder = document.getElementById("resultPlaceholder");
 const placeholderText = document.getElementById("placeholderText");
@@ -179,6 +178,7 @@ async function checkHealth() {
 			signal: AbortSignal.timeout(5000),
 		});
 		const data = await res.json();
+		isOpenAiKeySet = !!data.openai_key_set;
 		if (data.gemini_key_count > 0) {
 			statusDot.className = "status-dot online";
 			headerStatus.title = `API sẵn sàng (${data.gemini_key_count} Gemini key)`;
@@ -212,6 +212,7 @@ function handleFile(file) {
 		state.imageDataUrl = e.target.result;
 		previewImg.src = state.imageDataUrl;
 		freezeImage();
+		enableGenderSelector();
 		hideError();
 		updateTransformBtn();
 	};
@@ -229,7 +230,12 @@ function freezeImage() {
 	const activeTab = document.querySelector(".source-tab.active");
 	if (activeTab) lastActiveSource = activeTab.dataset.source;
 	stopCamera();
-	sourceTabs.forEach((t) => t.classList.add("hidden"));
+	// Keep the Tải ảnh / Chụp ảnh tabs visible but muted+unclickable while an
+	// image is frozen — only the X button can undo it back to the start.
+	sourceTabs.forEach((t) => {
+		t.disabled = true;
+		t.classList.add("is-disabled");
+	});
 	Object.values(sourceBodies).forEach((el) => el.classList.add("hidden"));
 	frozenImgWrap.classList.remove("hidden");
 	sourceSubtitle.textContent = "Sẵn sàng để biến đổi";
@@ -242,15 +248,17 @@ function unfreezeImage() {
 	// Reset the file input so re-selecting the same file still fires "change".
 	fileInput.value = "";
 	frozenImgWrap.classList.add("hidden");
-	sourceTabs.forEach((t) => t.classList.remove("hidden"));
 	sourceBodies.upload.classList.toggle("hidden", lastActiveSource !== "upload");
 	sourceBodies.camera.classList.toggle("hidden", lastActiveSource !== "camera");
 	sourceTabs.forEach((t) => {
+		t.disabled = false;
+		t.classList.remove("is-disabled");
 		const isActive = t.dataset.source === lastActiveSource;
 		t.classList.toggle("active", isActive);
 		t.setAttribute("aria-selected", isActive ? "true" : "false");
 	});
 	sourceSubtitle.textContent = "Chọn cách lấy ảnh: tải lên hoặc camera";
+	resetGenderSelector();
 	hideError();
 	if (lastActiveSource === "camera") {
 		openCamera();
@@ -288,6 +296,7 @@ fileInput.addEventListener("change", (e) => handleFile(e.target.files[0]));
 // ── Source Tabs ───────────────────────────────────────────────────────────
 sourceTabs.forEach((tab) => {
 	tab.addEventListener("click", () => {
+		if (tab.disabled) return;
 		const source = tab.dataset.source;
 		sourceTabs.forEach((t) => {
 			t.classList.remove("active");
@@ -336,13 +345,14 @@ let countdownIntervalId = null;
 async function initMediaPipe() {
 	if (hands) return;
 	hands = new Hands({
-		locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+		locateFile: (file) =>
+			`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`,
 	});
 	hands.setOptions({
 		maxNumHands: 1,
 		modelComplexity: 1,
 		minDetectionConfidence: 0.6,
-		minTrackingConfidence: 0.6
+		minTrackingConfidence: 0.6,
 	});
 	hands.onResults(onHandsResult);
 	await hands.initialize();
@@ -356,14 +366,20 @@ async function detectHandsLoop() {
 	// MediaPipe's WASM graph throws an unrecoverable fatal error on a
 	// zero-size frame, permanently breaking hand detection for the rest of
 	// the page's life (only the first camera session would ever work).
-	const hasValidFrame = cameraVideo.videoWidth > 0 && cameraVideo.videoHeight > 0;
+	const hasValidFrame =
+		cameraVideo.videoWidth > 0 && cameraVideo.videoHeight > 0;
 
-	if (isMediaPipeReady && hasValidFrame && autoCaptureToggle.checked && !isCountingDown) {
+	if (
+		isMediaPipeReady &&
+		hasValidFrame &&
+		autoCaptureToggle.checked &&
+		!isCountingDown
+	) {
 		if (cameraVideo.currentTime !== lastVideoTime) {
 			lastVideoTime = cameraVideo.currentTime;
 			try {
 				await hands.send({ image: cameraVideo });
-			} catch (e) { }
+			} catch (e) {}
 		}
 	}
 	detectLoopId = requestAnimationFrame(detectHandsLoop);
@@ -389,7 +405,7 @@ function stopHandDetection() {
 		countdownIntervalId = null;
 	}
 	isCountingDown = false;
-	countdownOverlay.classList.add('hidden');
+	countdownOverlay.classList.add("hidden");
 	// Reset gesture-tracking accumulators so a fresh camera session doesn't
 	// inherit stale timing from the previous one.
 	fingersUpDuration = 0;
@@ -413,15 +429,17 @@ function onHandsResult(results) {
 	}
 
 	const now = Date.now();
-	if (openFingers >= 4) { // Dơ 4-5 ngón là tính
+	if (openFingers >= 4) {
+		// Dơ 4-5 ngón là tính
 		if (lastDetectionTime === 0) {
 			lastDetectionTime = now;
 		} else {
-			fingersUpDuration += (now - lastDetectionTime);
+			fingersUpDuration += now - lastDetectionTime;
 			lastDetectionTime = now;
 		}
 
-		if (fingersUpDuration > 1000) { // Giữ 1 giây
+		if (fingersUpDuration > 1000) {
+			// Giữ 1 giây
 			startCountdown();
 			fingersUpDuration = 0;
 			lastDetectionTime = 0;
@@ -434,21 +452,21 @@ function onHandsResult(results) {
 
 function startCountdown() {
 	isCountingDown = true;
-	countdownOverlay.classList.remove('hidden');
+	countdownOverlay.classList.remove("hidden");
 	let count = 3;
 	countdownText.textContent = count;
 
 	countdownIntervalId = setInterval(() => {
 		count--;
 		if (count > 0) {
-			countdownText.style.animation = 'none';
+			countdownText.style.animation = "none";
 			countdownText.offsetHeight; // trigger reflow
 			countdownText.style.animation = null;
 			countdownText.textContent = count;
 		} else {
 			clearInterval(countdownIntervalId);
 			countdownIntervalId = null;
-			countdownOverlay.classList.add('hidden');
+			countdownOverlay.classList.add("hidden");
 			captureCameraBtn.click();
 			isCountingDown = false;
 		}
@@ -456,22 +474,26 @@ function startCountdown() {
 }
 
 async function populateCameraList() {
-	if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+	if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices)
+		return;
 	try {
 		const devices = await navigator.mediaDevices.enumerateDevices();
-		const videoDevices = devices.filter(d => d.kind === 'videoinput');
+		const videoDevices = devices.filter((d) => d.kind === "videoinput");
 
-		cameraSelect.innerHTML = '';
+		cameraSelect.innerHTML = "";
 		if (videoDevices.length > 0) {
-			cameraSelect.classList.remove('hidden');
+			cameraSelect.classList.remove("hidden");
 			videoDevices.forEach((device, index) => {
-				const option = document.createElement('option');
+				const option = document.createElement("option");
 				option.value = device.deviceId;
 				option.text = device.label || `Camera ${index + 1}`;
 				cameraSelect.appendChild(option);
 			});
 
-			if (currentDeviceId && videoDevices.find(d => d.deviceId === currentDeviceId)) {
+			if (
+				currentDeviceId &&
+				videoDevices.find((d) => d.deviceId === currentDeviceId)
+			) {
 				cameraSelect.value = currentDeviceId;
 			} else {
 				currentDeviceId = cameraSelect.value;
@@ -483,7 +505,7 @@ async function populateCameraList() {
 				openCamera();
 			};
 		} else {
-			cameraSelect.classList.add('hidden');
+			cameraSelect.classList.add("hidden");
 		}
 	} catch (e) {
 		console.error("Lỗi lấy danh sách camera", e);
@@ -522,7 +544,9 @@ async function openCamera() {
 
 	try {
 		const constraints = {
-			video: currentDeviceId ? { deviceId: { exact: currentDeviceId } } : { facingMode: "user" },
+			video: currentDeviceId
+				? { deviceId: { exact: currentDeviceId } }
+				: { facingMode: "user" },
 			audio: false,
 		};
 		videoStream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -536,9 +560,12 @@ async function openCamera() {
 	} catch (err) {
 		if (err.name === "NotAllowedError" || err.name === "SecurityError") {
 			showCameraError(
-				"Quyền camera đang bị chặn cho trang này. Nhấn vào biểu tượng ổ khóa/camera trên thanh địa chỉ trình duyệt, chọn \"Cho phép\" rồi tải lại trang.",
+				'Quyền camera đang bị chặn cho trang này. Nhấn vào biểu tượng ổ khóa/camera trên thanh địa chỉ trình duyệt, chọn "Cho phép" rồi tải lại trang.',
 			);
-		} else if (err.name === "NotFoundError" || err.name === "OverconstrainedError") {
+		} else if (
+			err.name === "NotFoundError" ||
+			err.name === "OverconstrainedError"
+		) {
 			showCameraError(
 				"Không tìm thấy camera trên thiết bị này, hoặc camera đang được ứng dụng khác sử dụng.",
 			);
@@ -655,19 +682,6 @@ removeSlotBtn.addEventListener("click", () => {
 	clearProfessionSlot();
 });
 
-// ── Gender Selection ──────────────────────────────────────────────────────
-genderBtns.forEach((btn) => {
-	btn.addEventListener("click", () => {
-		state.selectedGender = btn.dataset.gender;
-		genderBtns.forEach((b) => {
-			b.classList.remove("active");
-			b.setAttribute("aria-pressed", "false");
-		});
-		btn.classList.add("active");
-		btn.setAttribute("aria-pressed", "true");
-	});
-});
-
 // ── Provider Selection ────────────────────────────────────────────────────
 providerBtns.forEach((btn) => {
 	btn.addEventListener("click", () => {
@@ -681,6 +695,44 @@ providerBtns.forEach((btn) => {
 	});
 });
 
+// ── Gender Selection ──────────────────────────────────────────────────────
+genderBtns.forEach((btn) => {
+	btn.addEventListener("click", () => {
+		if (btn.disabled) return;
+		state.selectedGender = btn.dataset.gender;
+		genderBtns.forEach((b) => {
+			b.classList.remove("active");
+			b.setAttribute("aria-pressed", "false");
+		});
+		btn.classList.add("active");
+		btn.setAttribute("aria-pressed", "true");
+	});
+});
+
+// Enabled (and defaulted to "Nam", highlighted) once an image is
+// uploaded/captured; disabled and un-highlighted again once removed.
+// TODO: "Nam" is a temporary default — swap for a real gender-classifier
+// model prediction later.
+function enableGenderSelector() {
+	genderSelector.classList.remove("is-disabled");
+	state.selectedGender = "nam";
+	genderBtns.forEach((b) => {
+		b.disabled = false;
+		const isNam = b.dataset.gender === "nam";
+		b.classList.toggle("active", isNam);
+		b.setAttribute("aria-pressed", isNam ? "true" : "false");
+	});
+}
+function resetGenderSelector() {
+	genderSelector.classList.add("is-disabled");
+	state.selectedGender = "nam";
+	genderBtns.forEach((b) => {
+		b.disabled = true;
+		b.classList.remove("active");
+		b.setAttribute("aria-pressed", "false");
+	});
+}
+
 // ── Transform Button State ────────────────────────────────────────────────
 function updateTransformBtn() {
 	const canTransform =
@@ -692,13 +744,12 @@ function updateTransformBtn() {
 }
 
 // ── Error Helpers ─────────────────────────────────────────────────────────
+// Errors are intentionally never surfaced in the UI — they're logged here
+// for developers/backend only, so a failure never interrupts the user's flow.
 function showError(msg) {
-	errorMessage.textContent = msg;
-	errorBox.classList.remove("hidden");
+	console.error("[App]", msg);
 }
-function hideError() {
-	errorBox.classList.add("hidden");
-}
+function hideError() {}
 
 // ── Main Transform Call ───────────────────────────────────────────────────
 transformBtn.addEventListener("click", async () => {
@@ -714,7 +765,7 @@ transformBtn.addEventListener("click", async () => {
 	// Button loading state
 	transformBtn.disabled = true;
 	transformBtn.classList.add("is-loading");
-	transformContent.innerHTML = `<span class="loading-spinner"></span><span>Đang xử lý...</span>`;
+	transformContent.innerHTML = `<span class="loading-spinner"></span><span>Đang biến đổi...</span>`;
 
 	// Disable capture buttons while inferring — no new frame can be grabbed mid-transform
 	captureCameraBtn.disabled = true;
@@ -725,6 +776,8 @@ transformBtn.addEventListener("click", async () => {
 	removeImgBtn.classList.add("is-disabled");
 	removeSlotBtn.disabled = true;
 	removeSlotBtn.classList.add("is-disabled");
+	genderSelector.classList.add("is-disabled");
+	genderBtns.forEach((b) => (b.disabled = true));
 
 	// Hide the profession picker right away and show the waiting screen
 	// in its place — no need to wait for the result to come back.
@@ -740,8 +793,8 @@ transformBtn.addEventListener("click", async () => {
 			const formData = new FormData();
 			formData.append("image", state.imageFile);
 			formData.append("profession", transformingProfession);
-			formData.append("gender", state.selectedGender);
 			formData.append("ai_provider", provider);
+			formData.append("gender", state.selectedGender);
 
 			// 1. Submit task
 			const res = await fetch(`${API_BASE}/api/tasks/change-clothes`, {
@@ -812,6 +865,13 @@ transformBtn.addEventListener("click", async () => {
 		try {
 			taskResult = await attemptTransform("gemini");
 		} catch (err) {
+			// Only fall back to OpenAI if a key is actually configured —
+			// otherwise the fallback attempt would just fail with a confusing
+			// "OpenAI key not configured" error that hides the real Gemini
+			// failure from the user. In that case, surface the original error.
+			if (!isOpenAiKeySet) {
+				throw err;
+			}
 			console.warn("Gemini failed, falling back to OpenAI...", err);
 			providerUsed = "openai";
 			taskResult = await attemptTransform("openai");
@@ -843,8 +903,11 @@ transformBtn.addEventListener("click", async () => {
 		compareAfterWrap.style.animation = "";
 		compareSliderHandle.style.animation = "";
 	} catch (err) {
+		// Log the real technical reason for developers only — the visible
+		// UI always shows a generic message so internal config/provider
+		// details are never exposed to the end user.
 		console.error("Transform error:", err);
-		showError(err.message || "Đã có lỗi xảy ra. Vui lòng thử lại.");
+		showError("Đã có lỗi xảy ra. Vui lòng thử lại.");
 		// Transform failed — let the user pick a profession again.
 		resultPlaceholder.classList.add("hidden");
 		professionPicker.classList.remove("hidden");
@@ -865,6 +928,8 @@ transformBtn.addEventListener("click", async () => {
 		removeImgBtn.classList.remove("is-disabled");
 		removeSlotBtn.disabled = false;
 		removeSlotBtn.classList.remove("is-disabled");
+		genderSelector.classList.remove("is-disabled");
+		genderBtns.forEach((b) => (b.disabled = false));
 
 		// Re-enable capture button only if the camera stream is still active
 		captureCameraBtn.disabled = !videoStream;
@@ -880,4 +945,3 @@ function downloadResult() {
 	a.click();
 }
 downloadBtn.addEventListener("click", downloadResult);
-

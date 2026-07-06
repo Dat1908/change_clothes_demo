@@ -9,10 +9,11 @@ from services.prompts import PROMPTS, NEGATIVE_PROMPT
 
 logger = logging.getLogger(__name__)
 
-# Index into GEMINI_API_KEYS of the key that last succeeded — future requests
-# start there first instead of always retrying from key #1, so a key that's
-# known to be rate-limited isn't hit again on every single request.
-_last_good_key_index = 0
+# Index into GEMINI_API_KEYS of the next key to try — advances by one on
+# every new request regardless of outcome, so load is spread evenly across
+# all configured keys (round-robin) instead of sticking to whichever key
+# last succeeded.
+_next_key_index = 0
 # Names of keys currently claimed by an in-flight request, so concurrent
 # requests spread across different keys instead of racing onto the same one.
 _keys_in_use = set()
@@ -166,39 +167,43 @@ def change_clothes_gemini(image_bytes: bytes, profession: str, gender: str = "na
     if not GEMINI_API_KEYS:
         raise ValueError("No Gemini API key configured.")
 
-    global _last_good_key_index
+    global _next_key_index
+
+    # Reserve this request's starting key up front (round-robin) and advance
+    # the shared pointer immediately, regardless of whether this call ends up
+    # succeeding or failing — so load is spread evenly across all keys
+    # instead of sticking to whichever key last happened to succeed.
+    with _key_index_lock:
+        request_start_index = _next_key_index % len(GEMINI_API_KEYS)
+        _next_key_index = (request_start_index + 1) % len(GEMINI_API_KEYS)
 
     def claim_next_key(offset: int):
-        """Pick the next candidate key, preferring the last-known-good one
-        and skipping any key another concurrent request already has claimed
-        (unless every key is already in use, in which case reuse is forced)."""
+        """Pick the next candidate key from this request's round-robin
+        starting point, skipping any key another concurrent request already
+        has claimed (unless every key is already in use, forcing reuse)."""
         with _key_index_lock:
-            start_index = _last_good_key_index if _last_good_key_index < len(GEMINI_API_KEYS) else 0
             all_in_use = len(_keys_in_use) >= len(GEMINI_API_KEYS)
             for i in range(len(GEMINI_API_KEYS)):
-                key_index = (start_index + offset + i) % len(GEMINI_API_KEYS)
+                key_index = (request_start_index + offset + i) % len(GEMINI_API_KEYS)
                 key_name, api_key = GEMINI_API_KEYS[key_index]
                 if all_in_use or key_name not in _keys_in_use:
                     _keys_in_use.add(key_name)
                     return key_index, key_name, api_key
             # Shouldn't happen, but fall back to the first key just in case.
-            key_index = start_index
+            key_index = request_start_index
             key_name, api_key = GEMINI_API_KEYS[key_index]
             return key_index, key_name, api_key
 
-    # Try keys starting from the last one known to work, wrapping around the
-    # pool, so a key that's currently rate-limited isn't retried first on
-    # every subsequent request — the next free key gets priority instead.
-    # Keys already claimed by another in-flight (concurrent) request are
-    # skipped so parallel requests spread across different keys.
+    # Try keys starting from this request's round-robin slot, wrapping around
+    # the pool on failure. Keys already claimed by another in-flight
+    # (concurrent) request are skipped so parallel requests spread across
+    # different keys.
     last_error = None
     for offset in range(len(GEMINI_API_KEYS)):
         key_index, key_name, api_key = claim_next_key(offset)
         logger.info(f"[Gemini] Calling Gemini for profession={profession} using {key_name}")
         try:
             result = attempt_gemini(api_key)
-            with _key_index_lock:
-                _last_good_key_index = key_index
             logger.info(f"[Gemini] Successfully generated image for profession={profession} using {key_name}")
             return result
         except Exception as e:
