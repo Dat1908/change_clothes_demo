@@ -11,7 +11,7 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Roboto+Condensed:wght@300;400;500;600;700;800;900&display=swap"
     rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css?v=2" />
 
   <!-- MediaPipe -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
@@ -137,13 +137,13 @@
           </div>
 
           <!-- Gender Selector -->
-          <div class="gender-selector" id="genderSelector" role="group" aria-label="Chọn giới tính">
+          <div class="gender-selector is-disabled" id="genderSelector" role="group" aria-label="Chọn giới tính">
             <span class="gender-selector-label">Giới tính:</span>
-            <button class="gender-btn active" id="genderBtnNam" data-gender="nam" aria-pressed="true">
+            <button type="button" class="gender-btn active" id="genderBtnNam" data-gender="nam" aria-pressed="true">
               <span class="gender-btn-icon"></span>
               <span>Nam</span>
             </button>
-            <button class="gender-btn" id="genderBtnNu" data-gender="nu" aria-pressed="false">
+            <button type="button" class="gender-btn" id="genderBtnNu" data-gender="nu" aria-pressed="false">
               <span class="gender-btn-icon"></span>
               <span>Nữ</span>
             </button>
@@ -330,7 +330,7 @@
     </div>
   </footer>
 
-  <script src="app.js?v=2"></script>
+  <script src="app.js?v=3"></script>
 </body>
 
 </html>

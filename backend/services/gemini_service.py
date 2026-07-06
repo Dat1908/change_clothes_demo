@@ -5,7 +5,7 @@ import threading
 import google.generativeai as genai
 from PIL import Image
 from config import GEMINI_API_KEYS, GEMINI_MODEL_NAME
-from services.prompts import PROMPTS, NEGATIVE_PROMPT
+from services.prompts import PROMPTS_NAM, PROMPTS_NU, NEGATIVE_PROMPT
 
 logger = logging.getLogger(__name__)
 
@@ -25,10 +25,11 @@ def change_clothes_gemini(image_bytes: bytes, profession: str, gender: str = "na
     Returns base64-encoded result image.
     """
     profession = profession.lower()
-    if profession not in PROMPTS:
-        raise ValueError(f"Unknown profession: {profession}. Choose from: {list(PROMPTS.keys())}")
+    prompts_dict = PROMPTS_NU if gender.lower().strip() == "nu" else PROMPTS_NAM
+    if profession not in prompts_dict:
+        raise ValueError(f"Unknown profession: {profession}. Choose from: {list(prompts_dict.keys())}")
 
-    prompt = PROMPTS[profession]
+    prompt = prompts_dict[profession]
     full_prompt = (
         f"Hãy chỉnh sửa hình ảnh của người này theo yêu cầu sau:\n{prompt}\n\n"
         f"Tuyệt đối KHÔNG được làm những điều sau:\n{NEGATIVE_PROMPT}\n\n"
