@@ -60,77 +60,77 @@ def change_clothes_gemini(image_bytes: bytes, profession: str, gender: str = "na
     logo_path = None
     logo_co_ao_path = None
 
+    sample_paths = []
+    badge_paths = []
+    name_tag_paths = []
+    logo_co_ao_paths = []
+    logo_paths = []
+
     if profession in POLICE_PROFESSIONS:
         prof_dir = os.path.join(sample_dir, gender_folder, profession)
-        # Fallback to the gender-agnostic top-level folder if the gendered one
-        # doesn't exist yet (e.g. only "nam" is populated so far).
         if not os.path.isdir(prof_dir):
             fallback_dir = os.path.join(sample_dir, profession)
             if os.path.isdir(fallback_dir):
                 logger.warning(f"[Gemini] Gendered folder '{prof_dir}' not found, falling back to '{fallback_dir}'")
                 prof_dir = fallback_dir
         
-        # Check for main clothing reference
-        tp_jpg = os.path.join(prof_dir, "trang_phuc.jpg")
-        tp_png = os.path.join(prof_dir, "trang_phuc.png")
-        sample_path = tp_jpg if os.path.exists(tp_jpg) else (tp_png if os.path.exists(tp_png) else None)
-        
-        # Check for badge reference
-        qh_jpg = os.path.join(prof_dir, "quan_ham.jpg")
-        qh_png = os.path.join(prof_dir, "quan_ham.png")
-        badge_path = qh_jpg if os.path.exists(qh_jpg) else (qh_png if os.path.exists(qh_png) else None)
-        
-        # Check for name tag reference
-        bt_jpg = os.path.join(prof_dir, "bien_ten.jpg")
-        bt_png = os.path.join(prof_dir, "bien_ten.png")
-        name_tag_path = bt_jpg if os.path.exists(bt_jpg) else (bt_png if os.path.exists(bt_png) else None)
-        
-        # Check for logo reference (used for canh_sat_co_dong)
-        lg_jpg = os.path.join(prof_dir, "logo.jpg")
-        lg_png = os.path.join(prof_dir, "logo.png")
-        logo_path = lg_jpg if os.path.exists(lg_jpg) else (lg_png if os.path.exists(lg_png) else None)
-
-        # Check for logo_co_ao reference
-        lca_jpg = os.path.join(prof_dir, "logo_co_ao.jpg")
-        lca_png = os.path.join(prof_dir, "logo_co_ao.png")
-        logo_co_ao_path = lca_jpg if os.path.exists(lca_jpg) else (lca_png if os.path.exists(lca_png) else None)
+        if os.path.isdir(prof_dir):
+            for f in os.listdir(prof_dir):
+                f_lower = f.lower()
+                if not f_lower.endswith(('.jpg', '.png', '.jpeg', '.webp')):
+                    continue
+                full_p = os.path.join(prof_dir, f)
+                if f_lower.startswith("trang_phuc"):
+                    sample_paths.append(full_p)
+                elif f_lower.startswith("quan_ham"):
+                    badge_paths.append(full_p)
+                elif f_lower.startswith("bien_ten"):
+                    name_tag_paths.append(full_p)
+                elif f_lower.startswith("logo_co_ao"):
+                    logo_co_ao_paths.append(full_p)
+                elif f_lower.startswith("logo"):
+                    logo_paths.append(full_p)
+            
+            sample_paths.sort()
+            badge_paths.sort()
+            name_tag_paths.sort()
+            logo_co_ao_paths.sort()
+            logo_paths.sort()
     else:
         # Fallback for non-police professions
         sample_path_jpg = os.path.join(sample_dir, f"{profession}.jpg")
         sample_path_png = os.path.join(sample_dir, f"{profession}.png")
-        sample_path = sample_path_jpg if os.path.exists(sample_path_jpg) else (sample_path_png if os.path.exists(sample_path_png) else None)
+        if os.path.exists(sample_path_jpg):
+            sample_paths.append(sample_path_jpg)
+        elif os.path.exists(sample_path_png):
+            sample_paths.append(sample_path_png)
     
     images_to_pass = []
     prompt_additions = []
     
     img_idx = 1
-    if sample_path:
-        sample_image = Image.open(sample_path).convert("RGB")
-        images_to_pass.append(sample_image)
+    for p in sample_paths:
+        images_to_pass.append(Image.open(p).convert("RGB"))
         prompt_additions.append(f"{img_idx}. Hình ảnh #{img_idx} là ẢNH THAM KHẢO TRANG PHỤC CHÍNH. Bắt buộc sao chép y hệt màu sắc, kiểu dáng, thiết kế từ bức ảnh này.")
         img_idx += 1
         
-    if badge_path:
-        badge_image = Image.open(badge_path).convert("RGB")
-        images_to_pass.append(badge_image)
+    for p in badge_paths:
+        images_to_pass.append(Image.open(p).convert("RGB"))
         prompt_additions.append(f"{img_idx}. Hình ảnh #{img_idx} là ẢNH THAM KHẢO QUÂN HÀM. Bắt buộc gắn chính xác thiết kế quân hàm này lên vai/cổ áo của trang phục. Bỏ qua các mô tả bằng chữ nếu có sự khác biệt, ảnh này là NGUỒN CHÍNH XÁC TUYỆT ĐỐI.")
         img_idx += 1
         
-    if name_tag_path:
-        name_tag_image = Image.open(name_tag_path).convert("RGB")
-        images_to_pass.append(name_tag_image)
+    for p in name_tag_paths:
+        images_to_pass.append(Image.open(p).convert("RGB"))
         prompt_additions.append(f"{img_idx}. Hình ảnh #{img_idx} là ẢNH THAM KHẢO BIỂN TÊN. Bắt buộc gắn chính xác thiết kế biển tên này lên ngực phải của trang phục. Giữ nguyên chính xác từng chữ cái và số trên biển tên.")
         img_idx += 1
         
-    if logo_path:
-        logo_image = Image.open(logo_path).convert("RGB")
-        images_to_pass.append(logo_image)
+    for p in logo_paths:
+        images_to_pass.append(Image.open(p).convert("RGB"))
         prompt_additions.append(f"{img_idx}. Hình ảnh #{img_idx} là ẢNH THAM KHẢO LOGO/HUY HIỆU. Bắt buộc gắn chính xác logo này lên CÁNH TAY TRÁI của trang phục. Đây là nguồn tuyệt đối cho thiết kế logo cánh tay.")
         img_idx += 1
         
-    if logo_co_ao_path:
-        logo_co_ao_image = Image.open(logo_co_ao_path).convert("RGB")
-        images_to_pass.append(logo_co_ao_image)
+    for p in logo_co_ao_paths:
+        images_to_pass.append(Image.open(p).convert("RGB"))
         prompt_additions.append(f"{img_idx}. Hình ảnh #{img_idx} là ẢNH THAM KHẢO LOGO CỔ ÁO. Bắt buộc gắn chính xác thiết kế logo này lên CẢ 2 BÊN CỔ ÁO của trang phục. Đây là nguồn tuyệt đối cho thiết kế logo ở cổ áo.")
         img_idx += 1
         
@@ -215,4 +215,6 @@ def change_clothes_gemini(image_bytes: bytes, profession: str, gender: str = "na
                 _keys_in_use.discard(key_name)
 
     logger.error(f"[Gemini] All {len(GEMINI_API_KEYS)} key(s) failed.")
-    raise last_error
+    if last_error:
+        raise last_error
+    raise RuntimeError("No Gemini API keys available or all failed without setting an error.")

@@ -251,7 +251,7 @@ async function autoDetectGender() {
 	genderSelector.classList.add("is-detecting");
 	
 	const controller = new AbortController();
-	const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+	const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
 	
 	try {
 		const formData = new FormData();
@@ -268,6 +268,11 @@ async function autoDetectGender() {
 		const data = await res.json();
 		const gender = data.gender || "nam";
 		
+		// Enable buttons so click() works
+		const genderBtns = document.querySelectorAll(".gender-btn");
+		genderBtns.forEach((b) => (b.disabled = false));
+		genderSelector.classList.remove("is-disabled");
+
 		// Click the correct gender button
 		const btnToClick = document.querySelector(`.gender-btn[data-gender="${gender}"]`);
 		if (btnToClick) btnToClick.click();
@@ -275,12 +280,22 @@ async function autoDetectGender() {
 	} catch (err) {
 		console.warn("Auto-detect gender failed or timed out:", err);
 		// Default to nam on error/timeout
+		const genderBtns = document.querySelectorAll(".gender-btn");
+		genderBtns.forEach((b) => (b.disabled = false));
+		genderSelector.classList.remove("is-disabled");
+
 		const btnNam = document.getElementById("genderBtnNam");
 		if (btnNam) btnNam.click();
 	} finally {
 		clearTimeout(timeoutId);
 		genderSelector.classList.remove("is-detecting");
-		genderSelector.classList.remove("is-disabled");
+		// Note: is-disabled is already removed above before clicking
+
+		// Auto scroll to the result panel (useful on mobile)
+		const resultPanel = document.querySelector(".result-panel");
+		if (resultPanel) {
+			resultPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+		}
 	}
 }
 

@@ -12,7 +12,7 @@ PROMPTS_NAM = {
             "Hình ảnh quần áo chính là đồng phục Cảnh Sát Cơ Động Việt NamẢnh chụp RAW DSLR siêu thực, độ phân giải 4K, ánh sáng tự nhiên.Tuyệt đối bắt buộc phải sao chép y hệt và giữ đúng 100% chi tiết biển tên, quân hàm, logo, 2 logo ở cổ áo, và trang phục từ hình ảnh tham khảo. "
             "Tuyệt đối giữ nguyên bản 100% khuôn mặt, danh tính, biểu cảm, cơ thể, vóc dáng và tư thế từ ảnh gốc của người dùng. "
             "Nghiêm cấm làm thay đổi khuôn mặt, tuyệt đối không lấy khuôn mặt từ ảnh tham khảo trang phục. "
-            "Chỉ thay đổi quần áo thành đồng phục chiến thuật chuẩn của Cảnh sát Cơ động Việt Namđồng phục chiến thuật màu xanh đen đậm với túi ngực, và bắt buộc phải có 2 logo (phù hiệu) gắn ở 2 bên cổ áo (logo như hình tham khảo và có 1 đường kẻ dọc vàng chạy qua).Thêm mũ bảo hiểm chiến thuật màu xanh đen đậm hoặc mũ nồi có logo bên tay trái. "
+            "Chỉ thay đổi quần áo thành đồng phục chiến thuật chuẩn của Cảnh sát Cơ động Việt Nam đồng phục chiến thuật màu xanh đen đậm, và bắt buộc phải có 2 logo (phù hiệu) gắn ở 2 bên cổ áo (logo như hình tham khảo gồm 1 logo, 1 ngôi sao và 1 đường kẻ ở dưới).Thêm mũ bảo hiểm chiến thuật màu xanh đen đậm hoặc mũ nồi có logo bên tay trái. "
             "Bối cảnh: ngoài trời."
         ),
     "canh_sat_dac_nhiem":         (
@@ -110,7 +110,7 @@ PROMPTS_NU = {
             "Hình ảnh quần áo chính là đồng phục Cảnh Sát Cơ Động Việt NamẢnh chụp RAW DSLR siêu thực, độ phân giải 4K, ánh sáng tự nhiên.Tuyệt đối bắt buộc phải sao chép y hệt và giữ đúng 100% chi tiết biển tên, quân hàm, logo, 2 logo ở cổ áo, và trang phục từ hình ảnh tham khảo. "
             "Tuyệt đối giữ nguyên bản 100% khuôn mặt, danh tính, biểu cảm, cơ thể, vóc dáng và tư thế từ ảnh gốc của người dùng. "
             "Nghiêm cấm làm thay đổi khuôn mặt, tuyệt đối không lấy khuôn mặt từ ảnh tham khảo trang phục. "
-            "Chỉ thay đổi quần áo thành đồng phục chiến thuật chuẩn của Cảnh sát Cơ động Việt Nam đồng phục chiến thuật màu xanh đen đậm, và bắt buộc phải có 2 logo (phù hiệu) gắn ở 2 bên cổ áo (logo như hình tham khảo và có 1 đường kẻ dọc vàng chạy qua).Thêm mũ bảo hiểm chiến thuật màu xanh đen đậm hoặc mũ nồi có logo bên tay trái. "
+            "Chỉ thay đổi quần áo thành đồng phục chiến thuật chuẩn của Cảnh sát Cơ động Việt Nam đồng phục chiến thuật màu xanh đen đậm, và bắt buộc phải có 2 logo (phù hiệu) gắn ở 2 bên cổ áo (logo như hình tham khảo bao gồm 1 logo, 1 ngôi sao và 1 đường kẻ ở dưới).Thêm mũ bảo hiểm chiến thuật màu xanh đen đậm hoặc mũ nồi có logo bên tay trái. "
             "Bối cảnh: ngoài trời."
         ),
     "canh_sat_dac_nhiem":         (

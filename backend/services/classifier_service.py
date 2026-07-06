@@ -38,9 +38,9 @@ def detect_gender(image_bytes: bytes) -> str:
         result = response.text.strip()
         logger.info(f"Gender classification result raw: {result}")
         
-        if "1" in result:
+        if result == "1":
             return "nam"
-        elif "0" in result:
+        elif result == "0":
             return "nu"
         else:
             logger.warning(f"Unexpected classification result: {result}")
