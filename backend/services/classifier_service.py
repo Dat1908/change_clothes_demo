@@ -5,6 +5,7 @@ from PIL import Image
 import google.generativeai as genai
 
 from config import GEMINI_API_KEYS
+from services.gemini_key_pool import call_with_round_robin_fallback
 
 logger = logging.getLogger(__name__)
 
@@ -18,26 +19,24 @@ def detect_gender(image_bytes: bytes) -> str:
         logger.error("No GEMINI API key found for classification.")
         return "nam"
 
-    try:
-        logger.info("Starting auto gender detection using Gemini...")
-        # Use the first available key for classification
-        _, api_key = GEMINI_API_KEYS[0]
+    img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
+    prompt = "Người trong ảnh là nam hay nữ? Nếu là nam hãy trả về số 1, nếu là nữ hãy trả về số 0. Trả về duy nhất 1 con số."
+
+    def attempt_classify(api_key: str) -> str:
         genai.configure(api_key=api_key)
-        
-        img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
         model = genai.GenerativeModel(model_name)
-        
-        prompt = "Người trong ảnh là nam hay nữ? Nếu là nam hãy trả về số 1, nếu là nữ hãy trả về số 0. Trả về duy nhất 1 con số."
-        
         # We use low temperature because we want a deterministic, factual answer
         response = model.generate_content(
             [prompt, img],
             generation_config=genai.types.GenerationConfig(temperature=0.0)
         )
-        
-        result = response.text.strip()
+        return response.text.strip()
+
+    try:
+        logger.info("Starting auto gender detection using Gemini...")
+        result = call_with_round_robin_fallback(attempt_classify, log_prefix="GenderClassifier")
         logger.info(f"Gender classification result raw: {result}")
-        
+
         if result == "1":
             return "nam"
         elif result == "0":
@@ -45,7 +44,7 @@ def detect_gender(image_bytes: bytes) -> str:
         else:
             logger.warning(f"Unexpected classification result: {result}")
             return "nam"
-            
+
     except Exception as e:
-        logger.error(f"Error during gender classification: {e}")
+        logger.error(f"Error during gender classification (all keys failed): {e}")
         return "nam"

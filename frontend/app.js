@@ -5,6 +5,82 @@
 const API_BASE = "";
 let isOpenAiKeySet = false;
 
+// ── Fullscreen Toggle ─────────────────────────────────────────────────────
+// F11 is a browser-chrome shortcut the page can never see or control
+// directly — document.fullscreenElement stays null even while F11 is
+// active. So when the user is in F11 and clicks the button to exit, a plain
+// exitFullscreen() call would fail (nothing is "fullscreenElement" from the
+// API's point of view). The fix: first requestFullscreen() (harmless no-op
+// visually, since we're already fullscreen) so the browser starts tracking
+// an active fullscreenElement, then immediately exitFullscreen() — which
+// drops out of fullscreen entirely, both the page's and F11's, in one click.
+const fullscreenToggleBtn = document.getElementById("fullscreenToggleBtn");
+const fullscreenIcon = document.getElementById("fullscreenIcon");
+
+// Set right after we ask the browser to exit fullscreen, so the icon
+// reflects "exited" immediately even if window.innerWidth/innerHeight (our
+// only signal for F11, which the Fullscreen API can't see) haven't caught
+// up yet. Cleared again on the next resize/fullscreenchange so real
+// fullscreen state (e.g. re-entering via F11 right after) isn't masked.
+let justExitedFullscreen = false;
+
+function isLikelyFullscreen() {
+	if (justExitedFullscreen) return false;
+	return (
+		!!document.fullscreenElement ||
+		(window.innerWidth >= screen.width && window.innerHeight >= screen.height)
+	);
+}
+
+function updateFullscreenIcon() {
+	const isFullscreen = isLikelyFullscreen();
+	fullscreenIcon.textContent = isFullscreen ? "✕" : "⛶";
+	fullscreenToggleBtn.classList.toggle("is-fullscreen", isFullscreen);
+	const label = isFullscreen ? "Thoát toàn màn hình" : "Toàn màn hình";
+	fullscreenToggleBtn.setAttribute("aria-label", label);
+	fullscreenToggleBtn.title = label;
+}
+
+fullscreenToggleBtn.addEventListener("click", async () => {
+	if (document.fullscreenElement) {
+		await document.exitFullscreen();
+		justExitedFullscreen = true;
+		updateFullscreenIcon();
+		return;
+	}
+	if (isLikelyFullscreen()) {
+		// Fullscreen via F11: claim the Fullscreen API first so the browser
+		// has something to exit, then exit it immediately — one click both
+		// enters and leaves the API's fullscreen, ending the F11 state too.
+		try {
+			await document.documentElement.requestFullscreen();
+			await document.exitFullscreen();
+		} catch (err) {
+			console.warn("Failed to exit F11 fullscreen:", err);
+		}
+		justExitedFullscreen = true;
+		updateFullscreenIcon();
+		return;
+	}
+	document.documentElement.requestFullscreen().catch((err) => {
+		console.warn("Failed to enter fullscreen:", err);
+	});
+	updateFullscreenIcon();
+});
+
+document.addEventListener("fullscreenchange", () => {
+	// Only clear the "just exited" override if the API itself now reports an
+	// active fullscreenElement (i.e. fullscreen was genuinely re-entered) —
+	// don't let the exit's own trailing fullscreenchange event stomp the
+	// flag we just set to reflect that same exit.
+	if (document.fullscreenElement) justExitedFullscreen = false;
+	updateFullscreenIcon();
+});
+window.addEventListener("resize", () => {
+	justExitedFullscreen = false;
+	updateFullscreenIcon();
+});
+
 // ── State ─────────────────────────────────────────────────────────────────
 const state = {
 	imageFile: null,
@@ -13,6 +89,7 @@ const state = {
 	selectedProvider: "openai",
 	selectedGender: "nam",
 	isLoading: false,
+	isDetectingGender: false,
 	resultB64: null,
 };
 
@@ -212,7 +289,6 @@ function handleFile(file) {
 		state.imageDataUrl = e.target.result;
 		previewImg.src = state.imageDataUrl;
 		freezeImage();
-		enableGenderSelector();
 		hideError();
 		updateTransformBtn();
 	};
@@ -239,62 +315,71 @@ function freezeImage() {
 	Object.values(sourceBodies).forEach((el) => el.classList.add("hidden"));
 	frozenImgWrap.classList.remove("hidden");
 	sourceSubtitle.textContent = "Sẵn sàng để biến đổi";
-	
-	// Auto detect gender
+
+	// Keep the gender selector disabled + unhighlighted, and dim the frozen
+	// preview, while gender detection is in flight.
+	resetGenderSelector();
+	frozenImgWrap.classList.add("is-detecting");
 	autoDetectGender();
 }
 
 async function autoDetectGender() {
 	if (!state.imageFile) return;
-	
+	const targetImageFile = state.imageFile;
+
+	state.isDetectingGender = true;
+	updateTransformBtn();
+
 	const genderSelector = document.getElementById("genderSelector");
 	genderSelector.classList.add("is-detecting");
-	
-	const controller = new AbortController();
-	const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
-	
+
+	// No client-side timeout/abort here on purpose — the backend is the one
+	// that owns key selection/fallback timing (it tries every configured key
+	// in turn before giving up), so the frontend simply waits for whatever
+	// the backend ultimately returns instead of racing it with its own
+	// timer and risking a premature "nam" fallback while a later key is
+	// still succeeding server-side.
+	let gender = "nam";
 	try {
 		const formData = new FormData();
-		formData.append("image", state.imageFile);
-		
+		formData.append("image", targetImageFile);
+
 		const res = await fetch("/api/detect-gender", {
 			method: "POST",
 			body: formData,
-			signal: controller.signal
 		});
-		
+
 		if (!res.ok) throw new Error("API failed");
-		
+
 		const data = await res.json();
-		const gender = data.gender || "nam";
-		
-		// Enable buttons so click() works
-		const genderBtns = document.querySelectorAll(".gender-btn");
-		genderBtns.forEach((b) => (b.disabled = false));
-		genderSelector.classList.remove("is-disabled");
-
-		// Click the correct gender button
-		const btnToClick = document.querySelector(`.gender-btn[data-gender="${gender}"]`);
-		if (btnToClick) btnToClick.click();
-		
+		gender = data.gender || "nam";
 	} catch (err) {
-		console.warn("Auto-detect gender failed or timed out:", err);
-		// Default to nam on error/timeout
-		const genderBtns = document.querySelectorAll(".gender-btn");
-		genderBtns.forEach((b) => (b.disabled = false));
-		genderSelector.classList.remove("is-disabled");
-
-		const btnNam = document.getElementById("genderBtnNam");
-		if (btnNam) btnNam.click();
+		console.warn("Auto-detect gender failed:", err);
+		gender = "nam";
 	} finally {
-		clearTimeout(timeoutId);
+		// If the image was removed/replaced while this request was in flight,
+		// this result is stale — don't touch the (now-different) current state.
+		if (state.imageFile !== targetImageFile) return;
+
+		// Only now — once we have a result (or a fallback) — enable the
+		// selector and highlight the detected gender.
+		enableGenderSelector();
+		const btnToClick = document.querySelector(
+			`.gender-btn[data-gender="${gender}"]`,
+		);
+		if (btnToClick) btnToClick.click();
+
 		genderSelector.classList.remove("is-detecting");
-		// Note: is-disabled is already removed above before clicking
+		frozenImgWrap.classList.remove("is-detecting");
+
+		state.isDetectingGender = false;
+		updateTransformBtn();
 
 		// Auto scroll to the result panel (useful on mobile)
 		const resultPanel = document.querySelector(".result-panel");
 		if (resultPanel) {
 			resultPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+			window.scrollBy({ top: 5, behavior: "smooth" });
 		}
 	}
 }
@@ -317,6 +402,7 @@ function unfreezeImage() {
 	});
 	sourceSubtitle.textContent = "Chọn cách lấy ảnh: tải lên hoặc camera";
 	resetGenderSelector();
+	state.isDetectingGender = false;
 	hideError();
 	if (lastActiveSource === "camera") {
 		openCamera();
@@ -498,7 +584,7 @@ function onHandsResult(results) {
 
 		if (fingersUpDuration > 1000) {
 			// Giữ 1 giây
-			startCountdown();
+			startCountdown(() => capturePhotoNow());
 			fingersUpDuration = 0;
 			lastDetectionTime = 0;
 		}
@@ -508,10 +594,15 @@ function onHandsResult(results) {
 	}
 }
 
-function startCountdown() {
+const COUNTDOWN_SECONDS = 5;
+
+// Shared countdown used by both auto-capture (gesture-triggered) and manual
+// capture (button-triggered) — both count down the same 5 seconds and then
+// perform the actual capture.
+function startCountdown(onDone) {
 	isCountingDown = true;
 	countdownOverlay.classList.remove("hidden");
-	let count = 3;
+	let count = COUNTDOWN_SECONDS;
 	countdownText.textContent = count;
 
 	countdownIntervalId = setInterval(() => {
@@ -525,8 +616,8 @@ function startCountdown() {
 			clearInterval(countdownIntervalId);
 			countdownIntervalId = null;
 			countdownOverlay.classList.add("hidden");
-			captureCameraBtn.click();
 			isCountingDown = false;
+			onDone();
 		}
 	}, 1000);
 }
@@ -650,7 +741,11 @@ function stopCamera() {
 	captureCameraBtn.disabled = true;
 }
 
-captureCameraBtn.addEventListener("click", () => {
+// Grabs the current video frame and hands it off as the captured photo.
+// Called directly by auto-capture (after its own countdown) and by the
+// manual capture button (also after a countdown — see the click handler
+// below) — never call this straight from a click without a countdown first.
+function capturePhotoNow() {
 	if (!videoStream) return;
 	const width = cameraVideo.videoWidth;
 	const height = cameraVideo.videoHeight;
@@ -673,6 +768,11 @@ captureCameraBtn.addEventListener("click", () => {
 		"image/jpeg",
 		0.9,
 	);
+}
+
+captureCameraBtn.addEventListener("click", () => {
+	if (!videoStream || isCountingDown) return;
+	startCountdown(() => capturePhotoNow());
 });
 
 // ── Profession Selection ──────────────────────────────────────────────────
@@ -717,7 +817,6 @@ function resetResultState() {
 		transformBtn.classList.remove("is-done");
 	}
 }
-
 
 professionBtns.forEach((btn) => {
 	btn.addEventListener("click", () => {
@@ -768,10 +867,9 @@ genderBtns.forEach((btn) => {
 	});
 });
 
-// Enabled (and defaulted to "Nam", highlighted) once an image is
-// uploaded/captured; disabled and un-highlighted again once removed.
-// TODO: "Nam" is a temporary default — swap for a real gender-classifier
-// model prediction later.
+// Enabled (defaulting to "Nam" highlighted) once gender detection
+// resolves; the caller immediately clicks the detected gender's button
+// afterwards to correct the highlight if detection returned "nu".
 function enableGenderSelector() {
 	genderSelector.classList.remove("is-disabled");
 	state.selectedGender = "nam";
@@ -798,6 +896,7 @@ function updateTransformBtn() {
 		state.imageFile &&
 		state.selectedProfession &&
 		!state.isLoading &&
+		!state.isDetectingGender &&
 		!state.resultB64;
 	transformBtn.disabled = !canTransform;
 }
@@ -812,7 +911,13 @@ function hideError() {}
 
 // ── Main Transform Call ───────────────────────────────────────────────────
 transformBtn.addEventListener("click", async () => {
-	if (!state.imageFile || !state.selectedProfession || state.isLoading) return;
+	if (
+		!state.imageFile ||
+		!state.selectedProfession ||
+		state.isLoading ||
+		state.isDetectingGender
+	)
+		return;
 
 	state.isLoading = true;
 	hideError();
@@ -919,6 +1024,11 @@ transformBtn.addEventListener("click", async () => {
 			return taskResult;
 		}
 
+		// Backend owns all coordination for this call — retrying across
+		// Gemini keys, prioritizing by response speed, and racing a backup
+		// request after BACKUP_TIMEOUT_SECONDS if needed. The frontend just
+		// submits one task and polls it; it only receives the winning
+		// result and how long it took, purely for display.
 		let taskResult = null;
 		let providerUsed = "gemini";
 		try {

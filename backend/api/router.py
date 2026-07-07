@@ -2,10 +2,9 @@ import logging
 from fastapi import APIRouter, File, Form, UploadFile, HTTPException, BackgroundTasks
 from fastapi.responses import JSONResponse
 
-from config import validate_config, OPENAI_API_KEY, GEMINI_API_KEYS, GPT_MODEL_NAME, GEMINI_MODEL_NAME
+from config import validate_config, OPENAI_API_KEY, GEMINI_API_KEYS, GPT_MODEL_NAME, GEMINI_MODEL_NAME, BACKUP_TIMEOUT_SECONDS
 from services.task_service import create_task, get_task_status, run_clothing_transformation
 from services.prompts import PROMPTS_NAM
-from services.classifier_service import detect_gender
 from services.classifier_service import detect_gender
 
 logger = logging.getLogger(__name__)
@@ -26,6 +25,7 @@ async def health_check():
         "openai_key_set": bool(OPENAI_API_KEY),
         "gemini_key_set": bool(GEMINI_API_KEYS),
         "gemini_key_count": len(GEMINI_API_KEYS),
+        "backup_timeout_seconds": BACKUP_TIMEOUT_SECONDS,
     }
 
 @router.post("/api/detect-gender")

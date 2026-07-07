@@ -1,23 +1,13 @@
 import base64
 import io
 import logging
-import threading
 import google.generativeai as genai
 from PIL import Image
-from config import GEMINI_API_KEYS, GEMINI_MODEL_NAME
+from config import GEMINI_MODEL_NAME
+from services.gemini_key_pool import call_with_key_fallback
 from services.prompts import PROMPTS_NAM, PROMPTS_NU, NEGATIVE_PROMPT
 
 logger = logging.getLogger(__name__)
-
-# Index into GEMINI_API_KEYS of the next key to try — advances by one on
-# every new request regardless of outcome, so load is spread evenly across
-# all configured keys (round-robin) instead of sticking to whichever key
-# last succeeded.
-_next_key_index = 0
-# Names of keys currently claimed by an in-flight request, so concurrent
-# requests spread across different keys instead of racing onto the same one.
-_keys_in_use = set()
-_key_index_lock = threading.Lock()
 
 
 def change_clothes_gemini(image_bytes: bytes, profession: str, gender: str = "nam") -> str:
@@ -165,56 +155,4 @@ def change_clothes_gemini(image_bytes: bytes, profession: str, gender: str = "na
 
         raise RuntimeError("Gemini did not return an image in the response.")
 
-    if not GEMINI_API_KEYS:
-        raise ValueError("No Gemini API key configured.")
-
-    global _next_key_index
-
-    # Reserve this request's starting key up front (round-robin) and advance
-    # the shared pointer immediately, regardless of whether this call ends up
-    # succeeding or failing — so load is spread evenly across all keys
-    # instead of sticking to whichever key last happened to succeed.
-    with _key_index_lock:
-        request_start_index = _next_key_index % len(GEMINI_API_KEYS)
-        _next_key_index = (request_start_index + 1) % len(GEMINI_API_KEYS)
-
-    def claim_next_key(offset: int):
-        """Pick the next candidate key from this request's round-robin
-        starting point, skipping any key another concurrent request already
-        has claimed (unless every key is already in use, forcing reuse)."""
-        with _key_index_lock:
-            all_in_use = len(_keys_in_use) >= len(GEMINI_API_KEYS)
-            for i in range(len(GEMINI_API_KEYS)):
-                key_index = (request_start_index + offset + i) % len(GEMINI_API_KEYS)
-                key_name, api_key = GEMINI_API_KEYS[key_index]
-                if all_in_use or key_name not in _keys_in_use:
-                    _keys_in_use.add(key_name)
-                    return key_index, key_name, api_key
-            # Shouldn't happen, but fall back to the first key just in case.
-            key_index = request_start_index
-            key_name, api_key = GEMINI_API_KEYS[key_index]
-            return key_index, key_name, api_key
-
-    # Try keys starting from this request's round-robin slot, wrapping around
-    # the pool on failure. Keys already claimed by another in-flight
-    # (concurrent) request are skipped so parallel requests spread across
-    # different keys.
-    last_error = None
-    for offset in range(len(GEMINI_API_KEYS)):
-        key_index, key_name, api_key = claim_next_key(offset)
-        logger.info(f"[Gemini] Calling Gemini for profession={profession} using {key_name}")
-        try:
-            result = attempt_gemini(api_key)
-            logger.info(f"[Gemini] Successfully generated image for profession={profession} using {key_name}")
-            return result
-        except Exception as e:
-            logger.warning(f"[Gemini] {key_name} failed: {e}")
-            last_error = e
-        finally:
-            with _key_index_lock:
-                _keys_in_use.discard(key_name)
-
-    logger.error(f"[Gemini] All {len(GEMINI_API_KEYS)} key(s) failed.")
-    if last_error:
-        raise last_error
-    raise RuntimeError("No Gemini API keys available or all failed without setting an error.")
+    return call_with_key_fallback(attempt_gemini, log_prefix=f"Gemini/profession={profession}")
