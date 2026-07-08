@@ -7,38 +7,114 @@ from config import GEMINI_API_KEYS
 
 logger = logging.getLogger(__name__)
 
-# Response-time history per key (last 5 calls, seconds), shared by every
-# Gemini-calling service (clothing transform, gender classification, ...) so
-# they all prioritize the same fastest-available key first. Starts as all
-# INITIAL_RESPONSE_SECONDS (half of the failure penalty) until a key
-# actually has real data — an untested key is treated as middling rather
-# than assumed to be the best or the worst. A failed call records the full
-# FAILURE_PENALTY_SECONDS instead of the real elapsed time, so a key that
-# errors out (quota exhausted, invalid, etc.) — rather than just responding
-# slowly — gets pushed to the back of the priority order instead of being
-# rewarded for failing fast.
-FAILURE_PENALTY_SECONDS = 200.0
-INITIAL_RESPONSE_SECONDS = FAILURE_PENALTY_SECONDS / 2
+# Worst-case response time recorded for a key that errored out (wrong/expired
+# key, quota exhausted, rate-limited, etc.) — used both as the failure
+# penalty and to derive the default/untested value below. Shared by the
+# generate pool's speed-priority logic only; the classify pool doesn't use
+# response times at all.
+MAX_RESPONSE_SECONDS = 120.0
+DEFAULT_RESPONSE_SECONDS = MAX_RESPONSE_SECONDS / 2
 _RESPONSE_HISTORY_SIZE = 5
+
+
+class _KeyPool:
+    """Tracks a "busy/free" flag per Gemini key, independently for one task
+    kind (classify or generate) — a key marked busy by a classify call has no
+    effect on whether generate can use that same key concurrently, and vice
+    versa. Subclassed/parameterized by the two call_with_*_fallback()
+    functions below rather than exposed directly.
+    """
+
+    def __init__(self):
+        self._busy = {key_name: False for key_name, _ in GEMINI_API_KEYS}
+        self._lock = threading.Lock()
+
+    def try_claim(self, key_name: str) -> bool:
+        """Mark a key busy and return True, or return False if it's already
+        busy (caller should skip it and try another key)."""
+        with self._lock:
+            if self._busy[key_name]:
+                return False
+            self._busy[key_name] = True
+            return True
+
+    def release(self, key_name: str):
+        with self._lock:
+            self._busy[key_name] = False
+
+
+# ─── Model classify: simple round-robin ─────────────────────────────────────
+# Own busy/free pool, independent from the generate pool below.
+_classify_pool = _KeyPool()
+_classify_next_index = 0
+_classify_index_lock = threading.Lock()
+
+
+def call_with_round_robin_fallback(call_fn, log_prefix: str):
+    """Classify: call_fn(api_key) against configured Gemini keys in turn.
+
+    - Advances a shared round-robin pointer by one on every call
+      (independent of outcome), so the next call starts from the next key —
+      never restarting from key #1 each time.
+    - A key already busy with another in-flight classify call is skipped.
+    - On failure (call raised, e.g. quota exhausted), moves on to the next
+      key in order, continuing from where the pointer left off rather than
+      restarting.
+    - Raises the last error only if every key was tried and all failed.
+    """
+    if not GEMINI_API_KEYS:
+        raise ValueError("No Gemini API key configured.")
+
+    global _classify_next_index
+    with _classify_index_lock:
+        start_index = _classify_next_index % len(GEMINI_API_KEYS)
+        _classify_next_index = (start_index + 1) % len(GEMINI_API_KEYS)
+
+    last_error = None
+    for offset in range(len(GEMINI_API_KEYS)):
+        key_index = (start_index + offset) % len(GEMINI_API_KEYS)
+        key_name, api_key = GEMINI_API_KEYS[key_index]
+
+        if not _classify_pool.try_claim(key_name):
+            logger.info(f"[{log_prefix}] {key_name} busy, skipping to next key")
+            continue
+
+        logger.info(f"[{log_prefix}] Calling Gemini using {key_name}")
+        try:
+            result = call_fn(api_key)
+            logger.info(f"[{log_prefix}] {key_name} succeeded")
+            return result
+        except Exception as e:
+            logger.warning(f"[{log_prefix}] {key_name} failed, trying next key: {e}")
+            last_error = e
+        finally:
+            _classify_pool.release(key_name)
+
+    logger.error(f"[{log_prefix}] All {len(GEMINI_API_KEYS)} key(s) failed or busy.")
+    if last_error:
+        raise last_error
+    raise RuntimeError(f"[{log_prefix}] All Gemini keys busy or failed without setting an error.")
+
+
+# ─── Model generate: priority by average response speed ────────────────────
+# Own busy/free pool, independent from the classify pool above.
+_generate_pool = _KeyPool()
 _response_times = {
-    key_name: deque([INITIAL_RESPONSE_SECONDS] * _RESPONSE_HISTORY_SIZE, maxlen=_RESPONSE_HISTORY_SIZE)
+    key_name: deque([DEFAULT_RESPONSE_SECONDS] * _RESPONSE_HISTORY_SIZE, maxlen=_RESPONSE_HISTORY_SIZE)
     for key_name, _ in GEMINI_API_KEYS
 }
-# Names of keys currently claimed by an in-flight request, so concurrent
-# requests (from any service) spread across different keys instead of
-# racing onto the same one.
-_keys_in_use = set()
-_lock = threading.Lock()
+_response_times_lock = threading.Lock()
 
 
 def _record_response_time(key_name: str, elapsed_seconds: float):
-    with _lock:
+    with _response_times_lock:
         _response_times[key_name].append(elapsed_seconds)
 
 
 def _average_response_time(key_name: str) -> float:
-    history = _response_times[key_name]
-    return sum(history) / len(history)
+    with _response_times_lock:
+        history = _response_times[key_name]
+        return sum(history) / len(history)
 
 
 def _ranked_keys_by_speed():
@@ -46,34 +122,71 @@ def _ranked_keys_by_speed():
     return sorted(GEMINI_API_KEYS, key=lambda entry: _average_response_time(entry[0]))
 
 
-def _claim_fastest_available_key():
-    """Pick the fastest-average-response key that no other in-flight
-    request has already claimed (unless every key is already in use,
-    forcing reuse of the fastest one anyway)."""
-    with _lock:
-        all_in_use = len(_keys_in_use) >= len(GEMINI_API_KEYS)
-        for key_name, api_key in _ranked_keys_by_speed():
-            if all_in_use or key_name not in _keys_in_use:
-                _keys_in_use.add(key_name)
-                return key_name, api_key
-        # Shouldn't happen, but fall back to the fastest key just in case.
-        key_name, api_key = _ranked_keys_by_speed()[0]
-        return key_name, api_key
+class AttemptBudget:
+    """Shared, thread-safe counter of how many Gemini calls are still
+    allowed across an entire logical request — used to cap the TOTAL number
+    of attempts (whether triggered by a failure/quota error moving to the
+    next key, or by a backup-timeout firing another attempt in parallel) at
+    the number of configured keys, never more, regardless of which of those
+    two triggers is responsible for any given attempt.
+    """
+
+    def __init__(self, max_attempts: int):
+        self._remaining = max_attempts
+        self._lock = threading.Lock()
+
+    def try_take(self) -> bool:
+        with self._lock:
+            if self._remaining <= 0:
+                return False
+            self._remaining -= 1
+            return True
 
 
-def call_with_key_fallback(call_fn, log_prefix: str):
-    """Run call_fn(api_key) against every configured Gemini key, fastest
-    average-response-time first, moving on to the next key immediately on
-    any failure (wrong/expired key, quota exhausted, rate-limited, etc.)
-    instead of giving up after the first error. Raises the last error only
-    if every key fails.
+def call_with_priority_fallback(call_fn, log_prefix: str, budget: "AttemptBudget | None" = None):
+    """Generate: call_fn(api_key) against configured Gemini keys, fastest
+    average-response-time first.
+
+    - Each key keeps a rolling history of its last 5 response times
+      (defaulting to MAX_RESPONSE_SECONDS/2 until it has real data); keys
+      are tried in ascending order of that average, so a consistently fast
+      key gets picked first on every call.
+    - A key already busy with another in-flight generate call is skipped.
+    - On failure (call raised, e.g. quota exhausted), that attempt's
+      response time is recorded as MAX_RESPONSE_SECONDS (not the real
+      elapsed time) so the key sinks to the back of the priority order, and
+      the next-fastest available key is tried.
+    - Raises the last error only if every key was tried and all failed.
+    - If `budget` is given (shared across concurrent backup-timeout
+      attempts for the same logical request), each retry-on-failure here
+      also consumes one unit from it, so the combined total of
+      failure-retries and backup-timeout attempts never exceeds
+      len(GEMINI_API_KEYS) for the request as a whole. Without a budget,
+      this function's own retries are still capped at len(GEMINI_API_KEYS)
+      as before (single-attempt callers, e.g. classify-adjacent usage).
     """
     if not GEMINI_API_KEYS:
         raise ValueError("No Gemini API key configured.")
 
     last_error = None
     for _ in range(len(GEMINI_API_KEYS)):
-        key_name, api_key = _claim_fastest_available_key()
+        if budget is not None and not budget.try_take():
+            logger.info(f"[{log_prefix}] Attempt budget exhausted, stopping.")
+            break
+
+        candidate = next(
+            (
+                (key_name, api_key)
+                for key_name, api_key in _ranked_keys_by_speed()
+                if _generate_pool.try_claim(key_name)
+            ),
+            None,
+        )
+        if candidate is None:
+            logger.info(f"[{log_prefix}] All keys currently busy.")
+            break
+        key_name, api_key = candidate
+
         logger.info(f"[{log_prefix}] Calling Gemini using {key_name}")
         started_at = time.monotonic()
         try:
@@ -83,58 +196,13 @@ def call_with_key_fallback(call_fn, log_prefix: str):
             logger.info(f"[{log_prefix}] {key_name} succeeded in {elapsed:.1f}s")
             return result
         except Exception as e:
-            # Record the failure as the penalty value (not the real elapsed
-            # time) so an erroring key is deprioritized rather than
-            # rewarded for failing fast.
-            _record_response_time(key_name, FAILURE_PENALTY_SECONDS)
+            _record_response_time(key_name, MAX_RESPONSE_SECONDS)
             logger.warning(f"[{log_prefix}] {key_name} failed, trying next key: {e}")
             last_error = e
         finally:
-            with _lock:
-                _keys_in_use.discard(key_name)
+            _generate_pool.release(key_name)
 
-    logger.error(f"[{log_prefix}] All {len(GEMINI_API_KEYS)} key(s) failed.")
+    logger.error(f"[{log_prefix}] All {len(GEMINI_API_KEYS)} key(s) failed, busy, or budget exhausted.")
     if last_error:
         raise last_error
-    raise RuntimeError("No Gemini API keys available or all failed without setting an error.")
-
-
-# Separate, simple round-robin pointer for lightweight callers (e.g. gender
-# classification) that just need load spread evenly across keys in turn —
-# no speed-based prioritization needed. Advances by one on every call
-# regardless of outcome, so the same key is never reused back-to-back while
-# others are available.
-_next_round_robin_index = 0
-
-
-def call_with_round_robin_fallback(call_fn, log_prefix: str):
-    """Run call_fn(api_key) starting from the next key in turn (advancing
-    the shared round-robin pointer every call, independent of outcome), and
-    move on to the next key immediately on failure — trying every key at
-    most once before giving up.
-    """
-    if not GEMINI_API_KEYS:
-        raise ValueError("No Gemini API key configured.")
-
-    global _next_round_robin_index
-    with _lock:
-        start_index = _next_round_robin_index % len(GEMINI_API_KEYS)
-        _next_round_robin_index = (start_index + 1) % len(GEMINI_API_KEYS)
-
-    last_error = None
-    for offset in range(len(GEMINI_API_KEYS)):
-        key_index = (start_index + offset) % len(GEMINI_API_KEYS)
-        key_name, api_key = GEMINI_API_KEYS[key_index]
-        logger.info(f"[{log_prefix}] Calling Gemini using {key_name}")
-        try:
-            result = call_fn(api_key)
-            logger.info(f"[{log_prefix}] {key_name} succeeded")
-            return result
-        except Exception as e:
-            logger.warning(f"[{log_prefix}] {key_name} failed, trying next key: {e}")
-            last_error = e
-
-    logger.error(f"[{log_prefix}] All {len(GEMINI_API_KEYS)} key(s) failed.")
-    if last_error:
-        raise last_error
-    raise RuntimeError("No Gemini API keys available or all failed without setting an error.")
+    raise RuntimeError(f"[{log_prefix}] All Gemini keys busy or failed without setting an error.")

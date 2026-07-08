@@ -4,16 +4,26 @@ import logging
 import google.generativeai as genai
 from PIL import Image
 from config import GEMINI_MODEL_NAME
-from services.gemini_key_pool import call_with_key_fallback
+from services.gemini_key_pool import call_with_priority_fallback, AttemptBudget
 from services.prompts import PROMPTS_NAM, PROMPTS_NU, NEGATIVE_PROMPT
 
 logger = logging.getLogger(__name__)
 
 
-def change_clothes_gemini(image_bytes: bytes, profession: str, gender: str = "nam") -> str:
+def change_clothes_gemini(
+    image_bytes: bytes,
+    profession: str,
+    gender: str = "nam",
+    budget: "AttemptBudget | None" = None,
+) -> str:
     """
     Use Google Gemini API to change clothing in the image.
     Returns base64-encoded result image.
+
+    `budget`, if given, is a shared AttemptBudget so that retries here
+    (triggered by a key failing/hitting quota) count against the same total
+    attempt cap as any concurrent backup-timeout attempts fired by the
+    caller — see services/task_service.py.
     """
     profession = profession.lower()
     prompts_dict = PROMPTS_NU if gender.lower().strip() == "nu" else PROMPTS_NAM
@@ -43,12 +53,6 @@ def change_clothes_gemini(image_bytes: bytes, profession: str, gender: str = "na
 
     # Normalise gender — accept "nam"/"nu" only, default to "nam"
     gender_folder = "nu" if gender.lower().strip() == "nu" else "nam"
-    
-    sample_path = None
-    badge_path = None
-    name_tag_path = None
-    logo_path = None
-    logo_co_ao_path = None
 
     sample_paths = []
     badge_paths = []
@@ -144,9 +148,14 @@ def change_clothes_gemini(image_bytes: bytes, profession: str, gender: str = "na
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel(model_name=GEMINI_MODEL_NAME)
         # Using low temperature for strict adherence
+        from google.generativeai.types import HarmCategory, HarmBlockThreshold
         response = model.generate_content(
             content_payload,
-            generation_config=genai.types.GenerationConfig(temperature=0.0, top_k=1, top_p=0.1)
+            generation_config=genai.types.GenerationConfig(temperature=0.0, top_k=1, top_p=0.1),
+            safety_settings={
+                HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+                HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+            }
         )
 
         for part in response.candidates[0].content.parts:
@@ -155,4 +164,6 @@ def change_clothes_gemini(image_bytes: bytes, profession: str, gender: str = "na
 
         raise RuntimeError("Gemini did not return an image in the response.")
 
-    return call_with_key_fallback(attempt_gemini, log_prefix=f"Gemini/profession={profession}")
+    return call_with_priority_fallback(
+        attempt_gemini, log_prefix=f"Gemini/profession={profession}", budget=budget
+    )

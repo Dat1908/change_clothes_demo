@@ -86,7 +86,6 @@ const state = {
 	imageFile: null,
 	imageDataUrl: null,
 	selectedProfession: null,
-	selectedProvider: "openai",
 	selectedGender: "nam",
 	isLoading: false,
 	isDetectingGender: false,
@@ -102,13 +101,13 @@ const frozenImgWrap = document.getElementById("frozenImgWrap");
 const removeImgBtn = document.getElementById("removeImgBtn");
 
 const sourceTabs = document.querySelectorAll(".source-tab");
+const tabCamera = document.getElementById("tab-camera");
 const sourceBodies = {
 	upload: document.getElementById("sourceBody-upload"),
 	camera: document.getElementById("sourceBody-camera"),
 };
 
 const professionBtns = document.querySelectorAll(".profession-btn");
-const providerBtns = document.querySelectorAll(".provider-btn");
 const genderBtns = document.querySelectorAll(".gender-btn");
 const genderSelector = document.getElementById("genderSelector");
 
@@ -124,12 +123,10 @@ const transformBtn = document.getElementById("transformBtn");
 const transformContent = document.getElementById("transformBtnContent");
 
 const resultPlaceholder = document.getElementById("resultPlaceholder");
-const placeholderText = document.getElementById("placeholderText");
 const placeholderSpinner = document.getElementById("placeholderSpinner");
 const resultImgWrap = document.getElementById("resultImgWrap");
 const resultImg = document.getElementById("resultImg");
 const resultTimeBadge = document.getElementById("resultTimeBadge");
-const resultSubtitle = document.getElementById("resultSubtitle");
 const downloadBtn = document.getElementById("downloadBtn");
 
 // Wipe-slider elements inside the result box (original → transformed)
@@ -289,6 +286,13 @@ function handleFile(file) {
 		state.imageDataUrl = e.target.result;
 		previewImg.src = state.imageDataUrl;
 		freezeImage();
+		// Only clear the chosen profession if it was already used to
+		// produce a result for the previous photo — otherwise keep it, so a
+		// user still setting up (no transform run yet) doesn't lose their
+		// pick just for swapping the photo before hitting transform.
+		if (state.resultB64) {
+			clearProfessionSlot();
+		}
 		hideError();
 		updateTransformBtn();
 	};
@@ -306,15 +310,14 @@ function freezeImage() {
 	const activeTab = document.querySelector(".source-tab.active");
 	if (activeTab) lastActiveSource = activeTab.dataset.source;
 	stopCamera();
-	// Keep the Tải ảnh / Chụp ảnh tabs visible but muted+unclickable while an
-	// image is frozen — only the X button can undo it back to the start.
-	sourceTabs.forEach((t) => {
-		t.disabled = true;
-		t.classList.add("is-disabled");
-	});
+	// Keep the Tải ảnh / Chụp ảnh tabs clickable even while an image is
+	// frozen (including mid gender-detection) so the user can start over
+	// with a new photo at any time, not just via the X button.
 	Object.values(sourceBodies).forEach((el) => el.classList.add("hidden"));
 	frozenImgWrap.classList.remove("hidden");
 	sourceSubtitle.textContent = "Sẵn sàng để biến đổi";
+	tabCamera.querySelector("span:last-child").textContent = "Chụp ảnh khác";
+	tabCamera.classList.add("is-retake");
 
 	// Keep the gender selector disabled + unhighlighted, and dim the frozen
 	// preview, while gender detection is in flight.
@@ -404,6 +407,18 @@ function unfreezeImage() {
 	resetGenderSelector();
 	state.isDetectingGender = false;
 	hideError();
+	// Only clear the chosen profession if the image being removed already
+	// produced a result — the profession picked for it no longer applies to
+	// whatever photo comes next. If the user is still setting up (no result
+	// yet), removing/replacing the photo shouldn't lose their profession
+	// pick, since they can just re-transform once a new photo is in place.
+	if (state.resultB64) {
+		clearProfessionSlot();
+	}
+	// Removing the photo via X (as opposed to starting over via a tab click)
+	// goes back to the plain "Chụp ảnh" label.
+	tabCamera.querySelector("span:last-child").textContent = "Chụp ảnh";
+	tabCamera.classList.remove("is-retake");
 	if (lastActiveSource === "camera") {
 		openCamera();
 	}
@@ -442,6 +457,15 @@ sourceTabs.forEach((tab) => {
 	tab.addEventListener("click", () => {
 		if (tab.disabled) return;
 		const source = tab.dataset.source;
+
+		// Clicking a tab while a photo is already frozen (including mid
+		// gender-detection) means "start over with a different source" —
+		// discard the current photo/profession first, same as the X button,
+		// then proceed to open the newly-selected tab below.
+		if (!frozenImgWrap.classList.contains("hidden")) {
+			unfreezeImage();
+		}
+
 		sourceTabs.forEach((t) => {
 			t.classList.remove("active");
 			t.setAttribute("aria-selected", "false");
@@ -840,19 +864,6 @@ removeSlotBtn.addEventListener("click", () => {
 	clearProfessionSlot();
 });
 
-// ── Provider Selection ────────────────────────────────────────────────────
-providerBtns.forEach((btn) => {
-	btn.addEventListener("click", () => {
-		state.selectedProvider = btn.dataset.provider;
-		providerBtns.forEach((b) => {
-			b.classList.remove("active");
-			b.setAttribute("aria-pressed", "false");
-		});
-		btn.classList.add("active");
-		btn.setAttribute("aria-pressed", "true");
-	});
-});
-
 // ── Gender Selection ──────────────────────────────────────────────────────
 genderBtns.forEach((btn) => {
 	btn.addEventListener("click", () => {
@@ -942,6 +953,12 @@ transformBtn.addEventListener("click", async () => {
 	removeSlotBtn.classList.add("is-disabled");
 	genderSelector.classList.add("is-disabled");
 	genderBtns.forEach((b) => (b.disabled = true));
+	// Also lock the Tải ảnh / Chụp ảnh (lại) tabs — no uploading or
+	// (re)capturing a new photo while a transform is in flight.
+	sourceTabs.forEach((t) => {
+		t.disabled = true;
+		t.classList.add("is-disabled");
+	});
 
 	// Hide the profession picker right away and show the waiting screen
 	// in its place — no need to wait for the result to come back.
@@ -1099,6 +1116,10 @@ transformBtn.addEventListener("click", async () => {
 		removeSlotBtn.classList.remove("is-disabled");
 		genderSelector.classList.remove("is-disabled");
 		genderBtns.forEach((b) => (b.disabled = false));
+		sourceTabs.forEach((t) => {
+			t.disabled = false;
+			t.classList.remove("is-disabled");
+		});
 
 		// Re-enable capture button only if the camera stream is still active
 		captureCameraBtn.disabled = !videoStream;

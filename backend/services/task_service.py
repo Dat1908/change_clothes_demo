@@ -6,6 +6,7 @@ from typing import Dict, Any
 from config import OPENAI_API_KEY, GEMINI_API_KEYS, BACKUP_TIMEOUT_SECONDS
 from services.openai_service import change_clothes_openai
 from services.gemini_service import change_clothes_gemini
+from services.gemini_key_pool import AttemptBudget
 
 logger = logging.getLogger(__name__)
 
@@ -24,14 +25,19 @@ def get_task_status(task_id: str) -> Dict[str, Any]:
     return TASKS.get(task_id)
 
 
-def _run_with_backup_race(call_fn, max_attempts: int, log_prefix: str):
+def _run_with_backup_race(call_fn, budget: AttemptBudget, log_prefix: str):
     """Run call_fn() once, and if it hasn't finished within
-    BACKUP_TIMEOUT_SECONDS, fire another independent attempt in parallel (up
-    to max_attempts total, one per BACKUP_TIMEOUT_SECONDS interval) —
+    BACKUP_TIMEOUT_SECONDS, fire another independent attempt in parallel —
     whichever attempt finishes first wins; the rest are simply abandoned
     (their threads keep running to completion but their result is ignored).
-    Entirely internal to the backend — callers just get back the winning
-    result or the last error if every attempt that was started failed.
+
+    call_fn() itself may also retry across multiple keys internally on
+    failure (see call_with_priority_fallback). Both triggers — a
+    backup-timeout firing a new parallel attempt here, and a failure
+    causing an internal retry inside call_fn() — draw from the same shared
+    `budget`, so the combined total number of Gemini calls across this
+    whole request never exceeds len(GEMINI_API_KEYS), no matter how the
+    individual attempts are distributed between the two triggers.
     """
     result_holder = {}
     done_event = threading.Event()
@@ -60,18 +66,24 @@ def _run_with_backup_race(call_fn, max_attempts: int, log_prefix: str):
         pending_count += 1
     threading.Thread(target=worker, args=("primary",), daemon=True).start()
 
-    for n in range(1, max_attempts):
+    backup_n = 1
+    while True:
         fired = done_event.wait(timeout=BACKUP_TIMEOUT_SECONDS)
         if fired:
             break
         with lock:
             if "result" in result_holder:
                 break
+        if not budget.try_take():
+            logger.info(f"[{log_prefix}] Attempt budget exhausted, no more backups will fire.")
+            break
+        backup_n += 1
+        with lock:
             pending_count += 1
         logger.warning(
-            f"[{log_prefix}] Exceeded {BACKUP_TIMEOUT_SECONDS}s, firing backup attempt #{n + 1} in parallel..."
+            f"[{log_prefix}] Exceeded {BACKUP_TIMEOUT_SECONDS}s, firing backup attempt #{backup_n} in parallel..."
         )
-        threading.Thread(target=worker, args=(f"backup #{n + 1}",), daemon=True).start()
+        threading.Thread(target=worker, args=(f"backup #{backup_n}",), daemon=True).start()
 
     done_event.wait()
 
@@ -93,17 +105,19 @@ def run_clothing_transformation(
         if ai_provider == "openai":
             if not OPENAI_API_KEY:
                 raise ValueError("OpenAI API key not configured.")
-            result_b64 = change_clothes_openai(image_bytes, profession)
+            result_b64 = change_clothes_openai(image_bytes, profession, gender=gender)
         else:
             if not GEMINI_API_KEYS:
                 raise ValueError("No Gemini API key configured.")
-            # Race up to one attempt per configured Gemini key: if the first
-            # attempt hasn't finished within BACKUP_TIMEOUT_SECONDS, fire
-            # another independent attempt in parallel and take whichever
-            # finishes first.
+            # One shared budget for the whole request: every attempt — the
+            # primary's first try, any of its internal retries-on-failure,
+            # and any backup-timeout attempt fired below — draws from the
+            # same pool via call_with_priority_fallback(budget=...), capping
+            # the combined total at len(GEMINI_API_KEYS).
+            budget = AttemptBudget(max_attempts=len(GEMINI_API_KEYS))
             result_b64 = _run_with_backup_race(
-                lambda: change_clothes_gemini(image_bytes, profession, gender=gender),
-                max_attempts=max(1, len(GEMINI_API_KEYS)),
+                lambda: change_clothes_gemini(image_bytes, profession, gender=gender, budget=budget),
+                budget=budget,
                 log_prefix=f"Transform/task={task_id}",
             )
 
