@@ -1,6 +1,9 @@
+import io
 import logging
-from fastapi import APIRouter, File, Form, UploadFile, HTTPException, BackgroundTasks
-from fastapi.responses import JSONResponse
+import socket
+from fastapi import APIRouter, File, Form, Request, UploadFile, HTTPException, BackgroundTasks
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
+import qrcode
 
 from config import validate_config, OPENAI_API_KEY, GEMINI_API_KEYS, GPT_MODEL_NAME, GEMINI_MODEL_NAME, BACKUP_TIMEOUT_SECONDS
 from services.task_service import create_task, get_task_status, run_clothing_transformation
@@ -8,6 +11,24 @@ from services.prompts import PROMPTS_NAM
 from services.classifier_service import detect_gender
 
 logger = logging.getLogger(__name__)
+
+
+def _get_lan_ip() -> str:
+    """Best-effort local LAN IP (e.g. 192.168.x.x) — a phone on the same
+    WiFi can reach this, unlike 127.0.0.1/localhost which only resolves on
+    the host machine itself. Doesn't actually send any traffic (UDP
+    connect() to a public IP just to see which local interface the OS would
+    route through); falls back to 127.0.0.1 if that fails (e.g. no network).
+    """
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.connect(("8.8.8.8", 80))
+            return s.getsockname()[0]
+    except OSError:
+        return "127.0.0.1"
+
+
+_LOCALHOST_NAMES = {"localhost", "127.0.0.1", "0.0.0.0"}
 router = APIRouter()
 
 @router.get("/health")
@@ -237,3 +258,108 @@ async def get_task(task_id: str):
             "error": task["error"],
         }
     )
+
+
+def _public_base_url(request: Request) -> str:
+    """The base URL a phone scanning a QR code would need to use to reach
+    this server. Derived from the incoming request itself (not a
+    hardcoded/.env value), so this works unmodified whether the app is
+    reached via an ngrok tunnel or a real domain once deployed. The one
+    exception: if the request came in on localhost/127.0.0.1 (i.e. local dev
+    on this machine's own browser), that hostname is swapped for this
+    machine's LAN IP — a phone scanning the code can reach 192.168.x.x over
+    WiFi but has no route to 127.0.0.1, which only means "this device" to
+    the phone itself.
+    """
+    base_url = request.base_url
+    if base_url.hostname in _LOCALHOST_NAMES:
+        base_url = base_url.replace(hostname=_get_lan_ip())
+    return str(base_url).rstrip("/")
+
+
+@router.get("/api/tasks/{task_id}/qrcode")
+async def get_task_qrcode(task_id: str, request: Request):
+    """
+    Return a QR code (PNG) encoding a link to a small preview/download page
+    for the completed result image — not the raw image file directly, so
+    the phone shows a clear "Tải xuống" button instead of just opening the
+    image inline with no obvious way to save it.
+    """
+    task = get_task_status(task_id)
+    if not task:
+        raise HTTPException(status_code=404, detail="Task not found")
+    if task["status"] != "completed" or not task.get("result_image_path"):
+        raise HTTPException(status_code=409, detail="Task result is not ready yet.")
+
+    page_url = f"{_public_base_url(request)}/d/{task_id}"
+
+    qr_img = qrcode.make(page_url, box_size=10, border=2)
+    buffer = io.BytesIO()
+    qr_img.save(buffer, format="PNG")
+    buffer.seek(0)
+
+    return StreamingResponse(buffer, media_type="image/png")
+
+
+@router.get("/d/{task_id}", response_class=HTMLResponse)
+async def download_page(task_id: str, request: Request):
+    """
+    Small mobile-friendly page a phone lands on after scanning the result
+    QR code: shows the transformed photo and a clear "Tải xuống" button
+    (rather than opening the raw image file inline, which leaves the user
+    guessing whether/how to save it).
+    """
+    task = get_task_status(task_id)
+    if not task or task["status"] != "completed" or not task.get("result_image_path"):
+        return HTMLResponse(
+            "<h1>Không tìm thấy ảnh kết quả.</h1>", status_code=404
+        )
+
+    image_url = f"{_public_base_url(request)}/uploads/{task_id}.png"
+
+    return HTMLResponse(f"""<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Tải ảnh kết quả - Ước Mơ Của Tôi</title>
+<style>
+  body {{
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 24px;
+    box-sizing: border-box;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: #fffbeb;
+  }}
+  img {{
+    max-width: 100%;
+    max-height: 65vh;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+  }}
+  a.download-btn {{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 32px;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #3b82f6, #60a5fa);
+    color: #fff;
+    font-size: 1.15rem;
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow: 0 4px 16px rgba(59,130,246,0.4);
+  }}
+</style>
+</head>
+<body>
+  <img src="{image_url}" alt="Ảnh kết quả" />
+  <a class="download-btn" href="{image_url}" download="uoc-mo-cua-toi-{task_id}.png">⬇️ Tải xuống</a>
+</body>
+</html>""")

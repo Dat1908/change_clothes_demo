@@ -1,9 +1,10 @@
+import base64
 import logging
 import threading
 import uuid
 from typing import Dict, Any
 
-from config import OPENAI_API_KEY, GEMINI_API_KEYS, BACKUP_TIMEOUT_SECONDS
+from config import OPENAI_API_KEY, GEMINI_API_KEYS, BACKUP_TIMEOUT_SECONDS, UPLOADS_DIR
 from services.openai_service import change_clothes_openai
 from services.gemini_service import change_clothes_gemini
 from services.gemini_key_pool import AttemptBudget
@@ -11,13 +12,19 @@ from services.gemini_key_pool import AttemptBudget
 logger = logging.getLogger(__name__)
 
 # In-memory task store. Structure:
-# { task_id: {"status": "processing" | "completed" | "failed", "result_b64": str, "error": str} }
+# { task_id: {"status": "processing" | "completed" | "failed", "result_b64": str,
+#             "result_image_path": str, "error": str} }
 TASKS: Dict[str, Dict[str, Any]] = {}
 
 def create_task() -> str:
     """Create a new task and return its ID."""
     task_id = str(uuid.uuid4())
-    TASKS[task_id] = {"status": "processing", "result_b64": None, "error": None}
+    TASKS[task_id] = {
+        "status": "processing",
+        "result_b64": None,
+        "result_image_path": None,
+        "error": None,
+    }
     return task_id
 
 def get_task_status(task_id: str) -> Dict[str, Any]:
@@ -121,10 +128,18 @@ def run_clothing_transformation(
                 log_prefix=f"Transform/task={task_id}",
             )
 
+        # Write the result to disk, keyed by task_id, so it can be served
+        # over HTTP (e.g. via the result QR code) — not just held as base64
+        # in memory, which no external device (like the phone scanning the
+        # QR) can reach directly.
+        image_path = UPLOADS_DIR / f"{task_id}.png"
+        image_path.write_bytes(base64.b64decode(result_b64))
+
         # Update task on success
         TASKS[task_id]["status"] = "completed"
         TASKS[task_id]["result_b64"] = result_b64
-        logger.info(f"Task {task_id} completed successfully.")
+        TASKS[task_id]["result_image_path"] = str(image_path)
+        logger.info(f"Task {task_id} completed successfully, image saved to {image_path}")
 
     except Exception as e:
         logger.exception(f"Task {task_id} failed: {e}")

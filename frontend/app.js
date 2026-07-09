@@ -127,7 +127,8 @@ const placeholderSpinner = document.getElementById("placeholderSpinner");
 const resultImgWrap = document.getElementById("resultImgWrap");
 const resultImg = document.getElementById("resultImg");
 const resultTimeBadge = document.getElementById("resultTimeBadge");
-const downloadBtn = document.getElementById("downloadBtn");
+const downloadQrWrap = document.getElementById("downloadQrWrap");
+const downloadQrImg = document.getElementById("downloadQrImg");
 
 // Wipe-slider elements inside the result box (original → transformed)
 const compareOriginal = document.getElementById("compareOriginal");
@@ -834,7 +835,8 @@ function resetResultState() {
 	if (state.resultB64) {
 		state.resultB64 = null;
 		resultImgWrap.classList.add("hidden");
-		downloadBtn.classList.add("hidden");
+		downloadQrWrap.classList.add("hidden");
+		downloadQrImg.src = "";
 		resultTimeBadge.classList.add("hidden");
 		resultPlaceholder.classList.add("hidden");
 		transformContent.classList.remove("hidden");
@@ -964,7 +966,7 @@ transformBtn.addEventListener("click", async () => {
 	// in its place — no need to wait for the result to come back.
 	professionPicker.classList.add("hidden");
 	resultImgWrap.classList.add("hidden");
-	downloadBtn.classList.add("hidden");
+	downloadQrWrap.classList.add("hidden");
 	resultTimeBadge.classList.add("hidden");
 	placeholderSpinner.classList.remove("hidden");
 	resultPlaceholder.classList.remove("hidden");
@@ -1031,7 +1033,7 @@ transformBtn.addEventListener("click", async () => {
 				}
 
 				if (pollData.status === "completed") {
-					taskResult = pollData;
+					taskResult = { ...pollData, task_id: taskId };
 					break;
 				} else if (pollData.status === "failed") {
 					throw new Error(pollData.error || "Quá trình xử lý thất bại.");
@@ -1078,7 +1080,6 @@ transformBtn.addEventListener("click", async () => {
 
 		resultPlaceholder.classList.add("hidden");
 		resultImgWrap.classList.remove("hidden");
-		downloadBtn.classList.remove("hidden");
 		professionPicker.classList.add("hidden");
 
 		// Restart the wipe animation from scratch (CSS "forwards" animations
@@ -1088,6 +1089,23 @@ transformBtn.addEventListener("click", async () => {
 		void compareAfterWrap.offsetWidth;
 		compareAfterWrap.style.animation = "";
 		compareSliderHandle.style.animation = "";
+
+		// Only reveal the QR code once the before/after wipe animation has
+		// actually finished playing — showing it earlier would let the user
+		// tap it before they've even seen the transformed result reveal.
+		const qrTaskId = taskResult.task_id;
+		compareAfterWrap.addEventListener(
+			"animationend",
+			() => {
+				// Guard against a stale listener firing after the user has
+				// already moved on to a different result in the meantime.
+				if (state.resultB64 && taskResult.result_image_b64 === state.resultB64) {
+					downloadQrImg.src = `${API_BASE}/api/tasks/${qrTaskId}/qrcode?t=${Date.now()}`;
+					downloadQrWrap.classList.remove("hidden");
+				}
+			},
+			{ once: true },
+		);
 	} catch (err) {
 		// Log the real technical reason for developers only — the visible
 		// UI always shows a generic message so internal config/provider
@@ -1126,12 +1144,3 @@ transformBtn.addEventListener("click", async () => {
 	}
 });
 
-// ── Download Result ───────────────────────────────────────────────────────
-function downloadResult() {
-	if (!state.resultB64) return;
-	const a = document.createElement("a");
-	a.href = `data:image/png;base64,${state.resultB64}`;
-	a.download = `outfit_${state.selectedProfession}_${Date.now()}.png`;
-	a.click();
-}
-downloadBtn.addEventListener("click", downloadResult);

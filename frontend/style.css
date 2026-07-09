@@ -1247,27 +1247,25 @@ body {
 	color: #fff;
 }
 
-.download-icon-btn {
+.download-qr-wrap {
 	position: absolute;
 	top: 12px;
 	right: 12px;
-	width: 42px;
-	height: 42px;
-	border-radius: 50%;
+	width: 140px;
+	height: 140px;
+	padding: 8px;
+	border-radius: var(--radius-md);
+	background: #fff;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	font-size: 1.2rem;
-	background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
-	border: none;
-	color: #fff;
-	cursor: pointer;
-	box-shadow: 0 4px 16px rgba(139, 92, 246, 0.4);
-	transition: all var(--transition);
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
 }
-.download-icon-btn:hover {
-	transform: translateY(-1px) scale(1.06);
-	box-shadow: 0 8px 24px rgba(139, 92, 246, 0.5);
+.download-qr-img {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	image-rendering: pixelated;
 }
 .result-img-after-wrap {
 	position: absolute;

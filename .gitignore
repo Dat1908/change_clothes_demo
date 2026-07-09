@@ -7,6 +7,10 @@ ENV/
 env.bak/
 venv.bak/
 
+# User-generated result images (written by backend/services/task_service.py,
+# served for the download QR code) — not source, don't commit.
+backend/uploads/
+
 # Python
 __pycache__/
 *.py[cod]

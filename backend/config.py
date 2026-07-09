@@ -7,6 +7,12 @@ from dotenv import load_dotenv
 env_path = Path(__file__).resolve().parent.parent / ".env"
 load_dotenv(dotenv_path=env_path)
 
+# Where completed transform results are written to disk, keyed by task_id,
+# so they can be served over HTTP (e.g. for the result QR code) instead of
+# only living as base64 in the in-memory task store.
+UPLOADS_DIR: Path = Path(__file__).resolve().parent / "uploads"
+UPLOADS_DIR.mkdir(exist_ok=True)
+
 OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
 GPT_MODEL_NAME: str = os.getenv("GPT_MODEL_NAME", "gpt-image-1")
 GEMINI_MODEL_NAME: str = os.getenv("GEMINI_MODEL_NAME", "gemini-2.0-flash-exp")

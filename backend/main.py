@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 # Add backend dir to path so imports work
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from config import validate_config, GEMINI_API_KEYS, OPENAI_API_KEY
+from config import validate_config, GEMINI_API_KEYS, OPENAI_API_KEY, UPLOADS_DIR
 from api.router import router as api_router
 
 # ─── Logging ────────────────────────────────────────────────────────────────
@@ -43,6 +43,11 @@ frontend_dir = Path(__file__).resolve().parent.parent / "frontend"
 if frontend_dir.exists():
     app.mount("/app", StaticFiles(directory=str(frontend_dir), html=True), name="frontend")
 
+# Serve completed transform result images (for the result QR code) directly
+# over HTTP so any device — including a phone scanning the QR — can fetch
+# them without going through the JSON task-status API.
+app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR)), name="uploads")
+
 # ─── Entry point ────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     import uvicorn
@@ -62,7 +67,7 @@ if __name__ == "__main__":
 
     uvicorn.run(
         "main:app",
-        host="127.0.0.1",
+        host="0.0.0.0",
         port=PORT,
         reload=True,
         log_level="info",
