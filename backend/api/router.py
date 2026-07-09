@@ -291,7 +291,7 @@ async def get_task_qrcode(task_id: str, request: Request):
     if task["status"] != "completed" or not task.get("result_image_path"):
         raise HTTPException(status_code=409, detail="Task result is not ready yet.")
 
-    page_url = f"{_public_base_url(request)}/d/{task_id}"
+    page_url = f"{_public_base_url(request)}/preview/{task_id}"
 
     qr_img = qrcode.make(page_url, box_size=10, border=2)
     buffer = io.BytesIO()
@@ -301,8 +301,8 @@ async def get_task_qrcode(task_id: str, request: Request):
     return StreamingResponse(buffer, media_type="image/png")
 
 
-@router.get("/d/{task_id}", response_class=HTMLResponse)
-async def download_page(task_id: str, request: Request):
+@router.get("/preview/{task_id}", response_class=HTMLResponse)
+async def download_page(task_id: str):
     """
     Small mobile-friendly page a phone lands on after scanning the result
     QR code: shows the transformed photo and a clear "Tải xuống" button
@@ -315,7 +315,15 @@ async def download_page(task_id: str, request: Request):
             "<h1>Không tìm thấy ảnh kết quả.</h1>", status_code=404
         )
 
-    image_url = f"{_public_base_url(request)}/uploads/{task_id}.png"
+    # Relative path, not an absolute URL with scheme+host: the <a download>
+    # attribute is silently ignored by browsers for cross-origin links, and
+    # behind a reverse proxy (Nginx, Cloudflare, etc. once deployed) the
+    # scheme/host FastAPI sees from the request can end up not exactly
+    # matching what the browser considers the page's own origin — even
+    # though it's actually the same server. A path with no scheme/host is
+    # always resolved same-origin, so this can't happen regardless of
+    # proxy setup.
+    image_url = f"/uploads/{task_id}.png"
 
     return HTMLResponse(f"""<!DOCTYPE html>
 <html lang="vi">
