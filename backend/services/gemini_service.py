@@ -5,7 +5,7 @@ import google.generativeai as genai
 from PIL import Image
 from config import GEMINI_MODEL_NAME
 from services.gemini_key_pool import call_with_priority_fallback, AttemptBudget
-from services.prompts import PROMPTS_NAM, PROMPTS_NU, NEGATIVE_PROMPT
+from services.prompts import PROMPTS_NAM, PROMPTS_NU, PROMPTS_NAM_FALLBACK, PROMPTS_NU_FALLBACK, NEGATIVE_PROMPT
 
 logger = logging.getLogger(__name__)
 
@@ -27,15 +27,27 @@ def change_clothes_gemini(
     """
     profession = profession.lower()
     prompts_dict = PROMPTS_NU if gender.lower().strip() == "nu" else PROMPTS_NAM
+    fallback_dict = PROMPTS_NU_FALLBACK if gender.lower().strip() == "nu" else PROMPTS_NAM_FALLBACK
+    
     if profession not in prompts_dict:
         raise ValueError(f"Unknown profession: {profession}. Choose from: {list(prompts_dict.keys())}")
 
     prompt = prompts_dict[profession]
     full_prompt = (
+        f"Đây là một bức ảnh hóa trang (cosplay) an toàn, vui nhộn và thân thiện với gia đình.\n"
         f"Hãy chỉnh sửa hình ảnh của người này theo yêu cầu sau:\n{prompt}\n\n"
         f"Tuyệt đối KHÔNG được làm những điều sau:\n{NEGATIVE_PROMPT}\n\n"
         f"Tạo một hình ảnh mới của người này với trang phục được thay đổi và bối cảnh (background) như mô tả, không cần giữ lại bối cảnh của ảnh gốc."
     )
+    
+    fallback_prompt_text = fallback_dict.get(profession)
+    if fallback_prompt_text:
+        full_fallback_prompt = (
+            f"Đây là một bức ảnh hóa trang (cosplay) an toàn, vui nhộn và thân thiện với gia đình.\n"
+            f"Hãy chỉnh sửa hình ảnh của người này theo yêu cầu sau:\n{fallback_prompt_text}\n\n"
+            f"Tuyệt đối KHÔNG được làm những điều sau:\n{NEGATIVE_PROMPT}\n\n"
+            f"Tạo một hình ảnh mới của người này với trang phục được thay đổi và bối cảnh (background) như mô tả, không cần giữ lại bối cảnh của ảnh gốc."
+        )
 
     logger.info(f"[Gemini] Calling {GEMINI_MODEL_NAME} for profession={profession}")
 
@@ -143,20 +155,49 @@ def change_clothes_gemini(
     else:
         prompt_with_res = full_prompt + "\n\nQUAN TRỌNG: Hình ảnh tạo ra BẮT BUỘC phải ở độ phân giải 4K với chất lượng cực kỳ cao."
         content_payload = [prompt_with_res, pil_image]
+        
+    fallback_payload = None
+    if fallback_prompt_text:
+        fallback_prompt_with_res = full_fallback_prompt + "\n\nQUAN TRỌNG: Hình ảnh tạo ra BẮT BUỘC phải ở độ phân giải 4K với chất lượng cực kỳ cao."
+        fallback_payload = [fallback_prompt_with_res, pil_image]
 
     def attempt_gemini(api_key: str):
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel(model_name=GEMINI_MODEL_NAME)
         # Using low temperature for strict adherence
         from google.generativeai.types import HarmCategory, HarmBlockThreshold
-        response = model.generate_content(
-            content_payload,
-            generation_config=genai.types.GenerationConfig(temperature=0.0, top_k=1, top_p=0.1),
-            safety_settings={
-                HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
-                HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
-            }
-        )
+        
+        def call_model(payload):
+            return model.generate_content(
+                payload,
+                generation_config=genai.types.GenerationConfig(temperature=0.0, top_k=1, top_p=0.1),
+                safety_settings={
+                    HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+                    HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+                }
+            )
+
+        try:
+            response = call_model(content_payload)
+            if hasattr(response, 'prompt_feedback') and response.prompt_feedback.block_reason:
+                raise ValueError(f"Prompt blocked by Gemini safety: {response.prompt_feedback.block_reason}")
+            if hasattr(response, 'candidates') and response.candidates and hasattr(response.candidates[0], 'finish_reason'):
+                fr = response.candidates[0].finish_reason
+                fr_name = getattr(fr, 'name', str(fr))
+                if fr_name in ['SAFETY', 'BLOCKLIST', 'PROHIBITED_CONTENT', '11']:
+                    raise ValueError(f"Candidate blocked by Gemini safety (finish_reason: {fr_name})")
+        except Exception as e:
+            err_msg = str(e).lower()
+            if fallback_payload and ("block" in err_msg or "safety" in err_msg or type(e).__name__ in ["StopCandidateException", "InvalidArgument"]):
+                logger.warning(f"[Gemini] Prompt blocked by safety system for {profession} ({e}). Retrying with fallback prompt...")
+                response = call_model(fallback_payload)
+            else:
+                raise e
+
+        if not hasattr(response, 'candidates') or not response.candidates:
+            raise RuntimeError(f"Gemini did not return any candidates. Response: {response}")
 
         for part in response.candidates[0].content.parts:
             if part.inline_data and "image" in part.inline_data.mime_type:

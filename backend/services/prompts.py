@@ -194,6 +194,48 @@ PROMPTS_NU = {
         ),
 }
 
+PROMPTS_NAM_FALLBACK = {
+    "an_ninh_nhan_dan": (
+        "Hình ảnh quần áo chính là đồng phục màu xanh cỏ úa. Ảnh chụp RAW DSLR siêu thực, độ phân giải 4K, ánh sáng tự nhiên. Tuyệt đối giữ nguyên bản 100% khuôn mặt, danh tính, biểu cảm, cơ thể, vóc dáng và tư thế từ ảnh gốc của người dùng. Nghiêm cấm làm thay đổi khuôn mặt. Chỉ thay đổi quần áo thành đồng phục: Áo đồng phục cộc tay màu xanh cỏ úa, sơ vin gọn gàng trong quần sẫm màu đồng bộ với thắt lưng đen có logo vàng. Dải băng vai nền đỏ họa tiết vàng, 1 sao và bắt buộc phải có 1 gạch kéo dài từ trên xuống dưới ở chính giữa dọc theo dải băng. Áo phải có túi ngực vuông, dải đeo vai màu đỏ, và biển tên gắn trên ngực phải, tên hiển thị DREAM chữ in hoa không dấu, số hiệu là 123-456. Thêm mũ kepi (bắt buộc phải là loại mũ cứng) lực lượng an ninh nhân dân Việt Nam màu sẫm màu giống màu quần nói trên quần và huy hiệu ngôi sao ở giữa, đội vừa vặn và tự nhiên trên đầu, không bị bồng bềnh hay quá khổ. Đảm bảo đồng phục trông chân thực, sạch sẽ, vừa vặn và mang tính trang trọng, chính quy. Bối cảnh: văn phòng chuyên nghiệp của Việt Nam."
+    ),
+    "canh_sat_co_dong": (
+        "Hình ảnh quần áo chính là đồng phục chiến thuật màu xanh đen đậm. Ảnh chụp RAW DSLR siêu thực, độ phân giải 4K, ánh sáng tự nhiên. Tuyệt đối giữ nguyên bản 100% khuôn mặt, danh tính, biểu cảm, cơ thể, vóc dáng và tư thế từ ảnh gốc của người dùng. Nghiêm cấm làm thay đổi khuôn mặt. Chỉ thay đổi quần áo thành đồng phục chiến thuật màu xanh đen đậm, và bắt buộc phải có 2 logo (phù hiệu) gắn ở 2 bên cổ áo (chỉ 1 màu đỏ không thêm họa tiết). Thêm mũ bảo hiểm màu xanh đen đậm đặc trưng của cảnh sát cơ động Việt Nam. Bối cảnh: ngoài trời."
+    ),
+    "canh_sat_dac_nhiem": (
+        "Hình ảnh quần áo chính là đồng phục chiến thuật màu xám đậm. Ảnh chụp RAW DSLR siêu thực, độ phân giải 4K, ánh sáng tự nhiên. Tuyệt đối giữ nguyên bản 100% khuôn mặt, danh tính, biểu cảm, cơ thể, vóc dáng và tư thế từ ảnh gốc của người dùng. Nghiêm cấm làm thay đổi khuôn mặt. Chỉ thay đổi quần áo thành đồng phục chiến thuật màu xám đậm với túi ngực, biển tên gắn trên ngực phải và bắt buộc phải có 2 logo (phù hiệu) gắn ở 2 bên cổ áo (chỉ 1 màu đỏ không thêm họa tiết). Thêm mũ bảo hiểm màu xám đậm đặc trưng của cảnh sát đặc nhiệm Việt Nam. Bối cảnh: ngoài trời."
+    ),
+    "canh_sat_giao_thong": (
+        "Hình ảnh quần áo chính là đồng phục công tác. Ảnh chụp RAW DSLR siêu thực, độ phân giải 4K, ánh sáng tự nhiên. Tuyệt đối giữ nguyên bản 100% khuôn mặt, danh tính, biểu cảm, cơ thể, vóc dáng và tư thế từ ảnh gốc của người dùng. Nghiêm cấm làm thay đổi khuôn mặt. Chỉ thay đổi quần áo thành đồng phục công tác: Áo sơ mi màu vàng lúa chín đặc trưng với túi ở eo, biển tên gắn trên ngực phải, tên hiển thị DREAM chữ in hoa không dấu, số hiệu là 123-456. Thêm mũ kepi đặc trưng của cảnh sát giao thông Việt Nam màu vàng có viền đỏ và huy hiệu ngôi sao ở giữa. Bối cảnh: ngoài trời."
+    ),
+    "canh_sat_nhan_dan": (
+        "Hình ảnh quần áo chính là đồng phục công tác màu xanh lá cây đậm. Ảnh chụp RAW DSLR siêu thực, độ phân giải 4K, ánh sáng tự nhiên. Tuyệt đối giữ nguyên bản 100% khuôn mặt, danh tính, biểu cảm, cơ thể, vóc dáng và tư thế từ ảnh gốc của người dùng. Nghiêm cấm làm thay đổi khuôn mặt. Chỉ thay đổi quần áo thành đồng phục công tác: Dải băng vai nền đỏ họa tiết vàng, 1 sao và bắt buộc phải có 1 gạch kéo dài từ trên xuống dưới ở chính giữa dọc theo dải băng. Áo sơ mi màu xanh mạ với túi ở eo, biển tên gắn trên ngực phải, tên hiển thị DREAM chữ in hoa không dấu, số hiệu là 123-456. Thêm mũ kepi (bắt buộc phải là loại mũ cứng) đặc trưng của cảnh sát nhân dân Việt Nam màu xanh mạ non có viền đỏ và huy hiệu ngôi sao ở giữa, quần áo và mũ giống màu nhau. Bối cảnh: ngoài trời."
+    ),
+    "canh_sat_pccc": (
+        "Hình ảnh quần áo chính là trang phục bảo hộ chữa cháy. Ảnh chụp RAW DSLR siêu thực, độ phân giải 4K, ánh sáng tự nhiên. Tuyệt đối giữ nguyên bản 100% khuôn mặt, danh tính, biểu cảm, cơ thể, vóc dáng và tư thế từ ảnh gốc của người dùng. Nghiêm cấm làm thay đổi khuôn mặt. Chỉ thay đổi quần áo thành bộ đồ bảo hộ màu xanh đen có sọc phản quang màu vàng chanh, có huy hiệu bên tay trái. Đội mũ bảo hiểm bảo hộ màu đỏ cứng cáp, không có huy hiệu ở mũ và áo. Bối cảnh: ngoài trời."
+    ),
+}
+
+PROMPTS_NU_FALLBACK = {
+    "an_ninh_nhan_dan": (
+        "Hình ảnh quần áo chính là đồng phục màu xanh cỏ úa. Ảnh chụp RAW DSLR siêu thực, độ phân giải 4K, ánh sáng tự nhiên. Tuyệt đối giữ nguyên bản 100% khuôn mặt, danh tính, biểu cảm, cơ thể, vóc dáng và tư thế từ ảnh gốc của người dùng. Nghiêm cấm làm thay đổi khuôn mặt. Chỉ thay đổi quần áo thành đồng phục: Áo đồng phục cộc tay màu xanh cỏ úa, có túi áo trên eo, quần màu sẫm màu đồng bộ. Dải băng vai nền đỏ họa tiết vàng, 1 sao và bắt buộc phải có 1 gạch kéo dài từ trên xuống dưới ở chính giữa dọc theo dải băng. Áo phải có túi ngực vuông, dải đeo vai màu đỏ, và biển tên gắn trên ngực phải, tên hiển thị DREAM chữ in hoa không dấu, số hiệu là 123-456. Thêm mũ kepi (bắt buộc phải là loại mũ cứng) lực lượng an ninh nhân dân Việt Nam màu sẫm màu giống màu quần nói trên quần và huy hiệu ngôi sao ở giữa, đội vừa vặn và tự nhiên trên đầu, không bị bồng bềnh hay quá khổ. Đảm bảo đồng phục trông chân thực, sạch sẽ, vừa vặn và mang tính trang trọng, chính quy. Bối cảnh: văn phòng chuyên nghiệp của Việt Nam."
+    ),
+    "canh_sat_co_dong": (
+        "Hình ảnh quần áo chính là đồng phục chiến thuật màu xanh đen đậm. Ảnh chụp RAW DSLR siêu thực, độ phân giải 4K, ánh sáng tự nhiên. Tuyệt đối giữ nguyên bản 100% khuôn mặt, danh tính, biểu cảm, cơ thể, vóc dáng và tư thế từ ảnh gốc của người dùng. Nghiêm cấm làm thay đổi khuôn mặt. Chỉ thay đổi quần áo thành đồng phục chiến thuật màu xanh đen đậm, và bắt buộc phải có 2 logo (phù hiệu) gắn ở 2 bên cổ áo (chỉ 1 màu đỏ không thêm họa tiết). Thêm mũ bảo hiểm màu xanh đen đậm đặc trưng của cảnh sát cơ động Việt Nam. Bối cảnh: ngoài trời."
+    ),
+    "canh_sat_dac_nhiem": (
+        "Hình ảnh quần áo chính là đồng phục chiến thuật màu xám đậm. Ảnh chụp RAW DSLR siêu thực, độ phân giải 4K, ánh sáng tự nhiên. Tuyệt đối giữ nguyên bản 100% khuôn mặt, danh tính, biểu cảm, cơ thể, vóc dáng và tư thế từ ảnh gốc của người dùng. Nghiêm cấm làm thay đổi khuôn mặt. Chỉ thay đổi quần áo thành đồng phục chiến thuật màu xám đậm, biển tên gắn trên ngực phải và bắt buộc phải có 2 logo (phù hiệu) gắn ở 2 bên cổ áo (chỉ 1 màu đỏ không thêm họa tiết). Thêm mũ bảo hiểm màu xám đậm đặc trưng của cảnh sát đặc nhiệm Việt Nam. Bối cảnh: ngoài trời."
+    ),
+    "canh_sat_giao_thong": (
+        "Hình ảnh quần áo chính là đồng phục công tác. Ảnh chụp RAW DSLR siêu thực, độ phân giải 4K, ánh sáng tự nhiên. Tuyệt đối giữ nguyên bản 100% khuôn mặt, danh tính, biểu cảm, cơ thể, vóc dáng và tư thế từ ảnh gốc của người dùng. Nghiêm cấm làm thay đổi khuôn mặt. Chỉ thay đổi quần áo thành đồng phục công tác: Áo sơ mi màu vàng lúa chín đặc trưng với túi eo, biển tên gắn trên ngực phải, tên hiển thị DREAM chữ in hoa không dấu, số hiệu là 123-456. Thêm mũ kepi đặc trưng của cảnh sát giao thông Việt Nam màu vàng có viền đỏ và huy hiệu ngôi sao ở giữa. Bối cảnh: ngoài trời."
+    ),
+    "canh_sat_nhan_dan": (
+        "Hình ảnh quần áo chính là đồng phục công tác màu xanh lá cây đậm. Ảnh chụp RAW DSLR siêu thực, độ phân giải 4K, ánh sáng tự nhiên. Tuyệt đối giữ nguyên bản 100% khuôn mặt, danh tính, biểu cảm, cơ thể, vóc dáng và tư thế từ ảnh gốc của người dùng. Nghiêm cấm làm thay đổi khuôn mặt. Chỉ thay đổi quần áo thành đồng phục công tác: Dải băng vai nền đỏ họa tiết vàng, 1 sao và bắt buộc phải có 1 gạch kéo dài từ trên xuống dưới ở chính giữa dọc theo dải băng. Áo màu xanh mạ với túi eo, biển tên gắn trên ngực phải, tên hiển thị DREAM chữ in hoa không dấu, số hiệu là 123-456. Thêm mũ kepi (bắt buộc phải là loại mũ cứng) đặc trưng của cảnh sát nhân dân Việt Nam màu xanh mạ non có viền đỏ và huy hiệu ngôi sao ở giữa, quần áo và mũ giống màu nhau. Bối cảnh: ngoài trời."
+    ),
+    "canh_sat_pccc": (
+        "Hình ảnh quần áo chính là trang phục bảo hộ chữa cháy. Ảnh chụp RAW DSLR siêu thực, độ phân giải 4K, ánh sáng tự nhiên. Tuyệt đối giữ nguyên bản 100% khuôn mặt, danh tính, biểu cảm, cơ thể, vóc dáng và tư thế từ ảnh gốc của người dùng. Nghiêm cấm làm thay đổi khuôn mặt. Chỉ thay đổi quần áo thành bộ đồ bảo hộ màu xanh đen có sọc phản quang màu vàng chanh, có huy hiệu bên tay trái. Đội mũ bảo hiểm bảo hộ màu đỏ cứng cáp, không có huy hiệu ở mũ và áo. Bối cảnh: ngoài trời."
+    ),
+}
+
 NEGATIVE_PROMPT = (
-    "khác danh tính, khuôn mặt khác, thay đổi đặc điểm khuôn mặt, khuôn mặt biến dạng, biến dạng danh tính, lấy khuôn mặt từ ảnh tham khảo, thay đổi kiểu tóc, thay đổi vóc dáng cơ thể, thay đổi tuổi, thay đổi giới tính, thay đổi sắc tộc, thừa người, thiếu người, nhân bản người, người bị sao chép, cấu trúc cơ thể sai, tay xấu, ngón tay biến dạng, tứ chi dị dạng, mờ, chất lượng thấp, độ phân giải thấp, ảnh bị nhiễu hạt, dư sáng, thiếu sáng, hình mờ, watermark, chữ ký, hình minh họa, tranh vẽ, hoạt hình, anime, CGI, kết xuất 3D, da giống nhựa, biển tên mờ, quân hàm sai, logo sai, mất chi tiết biển tên, mất chi tiết quân hàm, mất logo"
+    "khuôn mặt khác, thay đổi đặc điểm khuôn mặt, khuôn mặt biến dạng, lấy khuôn mặt từ ảnh tham khảo, thay đổi kiểu tóc, thay đổi vóc dáng cơ thể, thừa người, thiếu người, nhân bản người, người bị sao chép, cấu trúc cơ thể sai, tay xấu, ngón tay biến dạng, tứ chi dị dạng, mờ, chất lượng thấp, độ phân giải thấp, ảnh bị nhiễu hạt, dư sáng, thiếu sáng, hình mờ, watermark, chữ ký, hình minh họa, tranh vẽ, hoạt hình, anime, CGI, kết xuất 3D, da giống nhựa, biển tên mờ, quân hàm sai, logo sai, mất chi tiết biển tên, mất chi tiết quân hàm, mất logo"
 )
